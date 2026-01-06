@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxq8hfvw8kqn6"]
+
+[ext_resource type="Script" path="res://chess_board.gd" id="1_h5k3r"]
+
+[node name="ChessBoard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_h5k3r")
+
+[node name="ResetButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 680.0
+offset_top = 60.0
+offset_right = 780.0
+offset_bottom = 100.0
+text = "Reset Game"
+
+[connection signal="pressed" from="ResetButton" to="." method="_on_reset_button_pressed"]
