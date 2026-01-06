@@ -1,0 +1,16 @@
+[configuration]
+
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.3
+reloadable = true
+
+[libraries]
+
+macos.debug.arm64 = "res://../target/aarch64-apple-darwin/debug/libchessmate.dylib"
+macos.release.arm64 = "res://../target/aarch64-apple-darwin/release/libchessmate.dylib"
+macos.debug.x86_64 = "res://../target/x86_64-apple-darwin/debug/libchessmate.dylib"
+macos.release.x86_64 = "res://../target/x86_64-apple-darwin/release/libchessmate.dylib"
+windows.debug.x86_64 = "res://../target/x86_64-pc-windows-msvc/debug/chessmate.dll"
+windows.release.x86_64 = "res://../target/x86_64-pc-windows-msvc/release/chessmate.dll"
+linux.debug.x86_64 = "res://../target/x86_64-unknown-linux-gnu/debug/libchessmate.so"
+linux.release.x86_64 = "res://../target/x86_64-unknown-linux-gnu/release/libchessmate.so"

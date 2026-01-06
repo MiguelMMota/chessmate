@@ -74,6 +74,8 @@ Players must balance traditional chess tactics with resource management, card dr
 
 ### Build Rust Extension
 
+The project is configured to build for **Apple Silicon (ARM64)** by default on macOS.
+
 Compile the Rust GDExtension library:
 
 ```bash
@@ -86,7 +88,13 @@ For optimized release builds:
 cargo build --release
 ```
 
-The compiled library will be placed in `target/debug/` or `target/release/`.
+The compiled library will be placed in:
+- **macOS (ARM64)**: `target/aarch64-apple-darwin/debug/` or `target/aarch64-apple-darwin/release/`
+- **macOS (Intel)**: `target/x86_64-apple-darwin/debug/` or `target/x86_64-apple-darwin/release/`
+- **Windows**: `target/x86_64-pc-windows-msvc/debug/` or `target/x86_64-pc-windows-msvc/release/`
+- **Linux**: `target/x86_64-unknown-linux-gnu/debug/` or `target/x86_64-unknown-linux-gnu/release/`
+
+**Note**: The `.cargo/config.toml` sets the default target to `aarch64-apple-darwin` for Apple Silicon Macs. Update this file if building on a different platform.
 
 ### Running in Godot
 

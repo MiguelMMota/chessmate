@@ -4,3 +4,30 @@ CLAUDE.md
 
 # Auxiliary scripts, useful for Claude Code workflow
 scripts/
+
+# Rust build artifacts
+/target
+Cargo.lock
+
+# Godot project files
+godot/.godot/
+godot/.import/
+godot/export.cfg
+godot/export_presets.cfg
+godot/*.translation
+
+# Godot auto-generated files
+godot/*.import
+godot/.mono/
+godot/data_*/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
