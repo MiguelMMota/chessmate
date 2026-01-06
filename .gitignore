@@ -1,0 +1,6 @@
+# Claude Code configuration and local task management
+.claude/
+CLAUDE.md
+
+# Auxiliary scripts, useful for Claude Code workflow
+scripts/
