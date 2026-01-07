@@ -1,7 +1,9 @@
 use godot::prelude::*;
 use super::board::{Board, GameStatus};
-use super::piece::{Position, Move, PieceType};
+use super::piece::{Position, Move, PieceType, Color};
 use super::rules::{generate_legal_moves, get_game_status};
+use super::chess_clock::ChessClockSettings;
+use std::collections::HashMap;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -30,6 +32,29 @@ impl ChessGame {
     #[func]
     pub fn reset_game(&mut self) {
         self.board = Board::new();
+        self.selected_position = None;
+    }
+
+    /// Reset the game with a chess clock
+    /// initial_time_seconds: time for each player in seconds
+    /// increment_seconds: time added after each move in seconds
+    #[func]
+    pub fn reset_game_with_clock(&mut self, initial_time_seconds: i32, increment_seconds: i32) {
+        let mut initial_times = HashMap::new();
+        initial_times.insert(0, initial_time_seconds); // White
+        initial_times.insert(1, initial_time_seconds); // Black
+
+        let mut increments = HashMap::new();
+        increments.insert(0, increment_seconds); // White
+        increments.insert(1, increment_seconds); // Black
+
+        let clock_settings = ChessClockSettings {
+            initial_times,
+            move_increments: increments,
+            triggers: vec![],
+        };
+
+        self.board = Board::new_with_clock(Some(clock_settings));
         self.selected_position = None;
     }
 
@@ -147,25 +172,68 @@ impl ChessGame {
     }
 
     /// Get the current game status
-    /// Returns: "ongoing", "check", "checkmate_white", "checkmate_black", "stalemate", "draw"
+    /// Returns: "ongoing", "check", "checkmate_white", "checkmate_black", "stalemate", "draw", "timeloss_white", "timeloss_black"
     #[func]
     pub fn get_game_status(&self) -> GString {
+        // First check for time loss
+        if let Some(color) = self.board.check_time_loss() {
+            return match color {
+                Color::White => "timeloss_white".into(),
+                Color::Black => "timeloss_black".into(),
+            };
+        }
+
+        // Then check regular game status
         match get_game_status(&self.board) {
             GameStatus::Ongoing => "ongoing".into(),
             GameStatus::Check => "check".into(),
             GameStatus::Checkmate(color) => match color {
-                super::piece::Color::White => "checkmate_white".into(),
-                super::piece::Color::Black => "checkmate_black".into(),
+                Color::White => "checkmate_white".into(),
+                Color::Black => "checkmate_black".into(),
             },
             GameStatus::Stalemate => "stalemate".into(),
             GameStatus::DrawInsufficientMaterial => "draw".into(),
+            GameStatus::TimeLoss(color) => match color {
+                Color::White => "timeloss_white".into(),
+                Color::Black => "timeloss_black".into(),
+            },
         }
     }
 
     /// Check if game is over
     #[func]
     pub fn is_game_over(&self) -> bool {
+        // Check time loss first
+        if self.board.check_time_loss().is_some() {
+            return true;
+        }
+
         let status = get_game_status(&self.board);
         !matches!(status, GameStatus::Ongoing | GameStatus::Check)
+    }
+
+    /// Tick the chess clock (should be called every second)
+    /// Returns false if the active player ran out of time
+    #[func]
+    pub fn tick_clock(&mut self) -> bool {
+        self.board.tick_clock()
+    }
+
+    /// Get remaining time for White in seconds (-1 if no clock)
+    #[func]
+    pub fn get_white_time(&self) -> i32 {
+        self.board.get_remaining_time(Color::White).unwrap_or(-1)
+    }
+
+    /// Get remaining time for Black in seconds (-1 if no clock)
+    #[func]
+    pub fn get_black_time(&self) -> i32 {
+        self.board.get_remaining_time(Color::Black).unwrap_or(-1)
+    }
+
+    /// Check if the game has a chess clock enabled
+    #[func]
+    pub fn has_clock(&self) -> bool {
+        self.board.has_clock()
     }
 }
