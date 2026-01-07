@@ -27,6 +27,9 @@ var piece_labels: Array = []
 var status_label: Label
 var promotion_panel: Panel
 var promotion_buttons: Dictionary = {}
+var white_clock_label: Label
+var black_clock_label: Label
+var clock_timer: Timer
 
 func _ready():
 	DebugUtils.debug("ChessBoard _ready() called")
@@ -44,7 +47,16 @@ func _ready():
 	setup_board()
 	setup_status_label()
 	setup_promotion_panel()
+	setup_clock_display()
+
+	# For testing, start with a clock (5 minutes + 3 second increment)
+	# To start without a clock, use: chess_game.reset_game()
+	chess_game.reset_game_with_clock(300, 3)
+
+	setup_clock_timer()
+
 	update_board()
+	update_clock_display()
 	DebugUtils.debug("Board setup complete")
 
 func setup_board():
@@ -115,6 +127,72 @@ func setup_promotion_panel():
 		button.pressed.connect(_on_promotion_selected.bind(piece_type.to_lower()))
 		promotion_panel.add_child(button)
 		promotion_buttons[piece_type.to_lower()] = button
+func setup_clock_display():
+	# White clock (bottom right of board)
+	white_clock_label = Label.new()
+	white_clock_label.position = Vector2(BOARD_SIZE + 40, 60 + BOARD_SIZE - 60)
+	white_clock_label.custom_minimum_size = Vector2(150, 50)
+	white_clock_label.add_theme_font_size_override("font_size", 28)
+	white_clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	white_clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(white_clock_label)
+
+	# Black clock (top right of board)
+	black_clock_label = Label.new()
+	black_clock_label.position = Vector2(BOARD_SIZE + 40, 60)
+	black_clock_label.custom_minimum_size = Vector2(150, 50)
+	black_clock_label.add_theme_font_size_override("font_size", 28)
+	black_clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	black_clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(black_clock_label)
+
+func setup_clock_timer():
+	clock_timer = Timer.new()
+	clock_timer.wait_time = 1.0  # Tick every second
+	clock_timer.timeout.connect(_on_clock_tick)
+	add_child(clock_timer)
+	if chess_game.has_clock():
+		clock_timer.start()
+
+func update_clock_display():
+	if chess_game.has_clock():
+		var white_time = chess_game.get_white_time()
+		var black_time = chess_game.get_black_time()
+
+		white_clock_label.text = format_time(white_time)
+		black_clock_label.text = format_time(black_time)
+
+		# Highlight active player's clock
+		var current_turn = chess_game.get_current_turn()
+		if current_turn == "white":
+			white_clock_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))  # Yellow
+			black_clock_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))  # White
+		else:
+			white_clock_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))  # White
+			black_clock_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))  # Yellow
+	else:
+		white_clock_label.text = ""
+		black_clock_label.text = ""
+
+func format_time(seconds: int) -> String:
+	if seconds < 0:
+		return ""
+
+	var mins = seconds / 60
+	var secs = seconds % 60
+	return "%d:%02d" % [mins, secs]
+
+func _on_clock_tick():
+	if not chess_game.is_game_over():
+		var still_has_time = chess_game.tick_clock()
+		update_clock_display()
+
+		if not still_has_time:
+			# Player ran out of time
+			update_status()
+			clock_timer.stop()
+	else:
+		clock_timer.stop()
 
 func _draw():
 	# Draw the chess board squares
@@ -172,6 +250,10 @@ func update_status():
 			status_label.text = "Checkmate! White wins!"
 		"checkmate_black":
 			status_label.text = "Checkmate! Black wins!"
+		"timeloss_white":
+			status_label.text = "Time out! Black wins!"
+		"timeloss_black":
+			status_label.text = "Time out! White wins!"
 		"stalemate":
 			status_label.text = "Stalemate! Draw."
 		"draw":
@@ -227,6 +309,7 @@ func handle_square_click(row: int, col: int):
 			legal_moves.clear()
 			update_board()
 			update_status()
+			update_clock_display()
 		else:
 			DebugUtils.debug("Move failed, trying to select new piece")
 			# Try to select the clicked square instead
