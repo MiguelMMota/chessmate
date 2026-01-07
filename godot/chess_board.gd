@@ -44,11 +44,12 @@ func _ready():
 	setup_board()
 	setup_status_label()
 	setup_clock_display()
-	setup_clock_timer()
 
 	# For testing, start with a clock (5 minutes + 3 second increment)
 	# To start without a clock, use: chess_game.reset_game()
 	chess_game.reset_game_with_clock(300, 3)
+
+	setup_clock_timer()
 
 	update_board()
 	update_clock_display()
