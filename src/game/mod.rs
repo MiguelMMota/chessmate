@@ -6,3 +6,4 @@ pub mod board;
 pub mod moves;
 pub mod rules;
 pub mod game_state;
+pub mod chess_clock;

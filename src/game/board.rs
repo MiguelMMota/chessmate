@@ -1,4 +1,5 @@
 use super::piece::{Color, Piece, PieceType, Position, Move};
+use super::chess_clock::{ChessClock, ChessClockSettings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameStatus {
@@ -7,6 +8,7 @@ pub enum GameStatus {
     Checkmate(Color), // Winner
     Stalemate,
     DrawInsufficientMaterial,
+    TimeLoss(Color), // Player who lost on time
 }
 
 #[derive(Debug, Clone)]
@@ -36,10 +38,15 @@ pub struct Board {
     en_passant_target: Option<Position>,
     halfmove_clock: u32,
     fullmove_number: u32,
+    chess_clock: Option<ChessClock>,
 }
 
 impl Board {
     pub fn new() -> Self {
+        Self::new_with_clock(None)
+    }
+
+    pub fn new_with_clock(clock_settings: Option<ChessClockSettings>) -> Self {
         let mut board = Self {
             squares: [[None; 8]; 8],
             current_turn: Color::White,
@@ -47,8 +54,15 @@ impl Board {
             en_passant_target: None,
             halfmove_clock: 0,
             fullmove_number: 1,
+            chess_clock: clock_settings.map(ChessClock::new),
         };
         board.setup_initial_position();
+
+        // Start White's clock if there is a clock
+        if let Some(ref mut clock) = board.chess_clock {
+            clock.start_player_clock(0); // White is player 0
+        }
+
         board
     }
 
@@ -105,6 +119,14 @@ impl Board {
 
     pub fn current_turn(&self) -> Color {
         self.current_turn
+    }
+
+    /// Convert Color to player ID (White=0, Black=1)
+    fn color_to_player_id(color: Color) -> usize {
+        match color {
+            Color::White => 0,
+            Color::Black => 1,
+        }
     }
 
     pub fn castling_rights(&self) -> &CastlingRights {
@@ -227,6 +249,15 @@ impl Board {
             self.fullmove_number += 1;
         }
 
+        // Handle chess clock
+        if let Some(ref mut clock) = self.chess_clock {
+            let current_player_id = Self::color_to_player_id(self.current_turn);
+            clock.end_turn(current_player_id);
+
+            let next_player_id = Self::color_to_player_id(self.current_turn.opposite());
+            clock.start_player_clock(next_player_id);
+        }
+
         // Switch turns
         self.current_turn = self.current_turn.opposite();
 
@@ -254,6 +285,44 @@ impl Board {
             }
         }
         pieces
+    }
+
+    /// Tick the chess clock (called every second)
+    /// Returns false if the active player ran out of time
+    pub fn tick_clock(&mut self) -> bool {
+        if let Some(ref mut clock) = self.chess_clock {
+            return clock.tick();
+        }
+        true
+    }
+
+    /// Get remaining time for a player
+    pub fn get_remaining_time(&self, color: Color) -> Option<i32> {
+        if let Some(ref clock) = self.chess_clock {
+            let player_id = Self::color_to_player_id(color);
+            return clock.get_remaining_time(player_id);
+        }
+        None
+    }
+
+    /// Check if any player has lost on time
+    /// Returns Some(Color) for the player who lost, None otherwise
+    pub fn check_time_loss(&self) -> Option<Color> {
+        if let Some(ref clock) = self.chess_clock {
+            if let Some(player_id) = clock.get_player_out_of_time() {
+                return Some(match player_id {
+                    0 => Color::White,
+                    1 => Color::Black,
+                    _ => return None,
+                });
+            }
+        }
+        None
+    }
+
+    /// Check if the board has a chess clock enabled
+    pub fn has_clock(&self) -> bool {
+        self.chess_clock.is_some()
     }
 }
 
