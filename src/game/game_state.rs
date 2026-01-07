@@ -44,6 +44,20 @@ impl ChessGame {
         }
     }
 
+    /// Get the color of the piece at a position ("white", "black", or "" if no piece)
+    #[func]
+    pub fn get_piece_color_at(&self, row: i32, col: i32) -> GString {
+        let pos = Position::new(row as i8, col as i8);
+        if let Some(piece) = self.board.get_piece(pos) {
+            match piece.color {
+                super::piece::Color::White => "white".into(),
+                super::piece::Color::Black => "black".into(),
+            }
+        } else {
+            GString::new()
+        }
+    }
+
     /// Get whose turn it is ("white" or "black")
     #[func]
     pub fn get_current_turn(&self) -> GString {

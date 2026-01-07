@@ -38,21 +38,15 @@ impl Piece {
         Self { piece_type, color }
     }
 
-    /// Returns the Unicode chess symbol for this piece
+    /// Returns the Unicode chess symbol for this piece (filled style for both colors)
     pub fn to_symbol(&self) -> char {
-        match (self.color, self.piece_type) {
-            (Color::White, PieceType::King) => '♔',
-            (Color::White, PieceType::Queen) => '♕',
-            (Color::White, PieceType::Rook) => '♖',
-            (Color::White, PieceType::Bishop) => '♗',
-            (Color::White, PieceType::Knight) => '♘',
-            (Color::White, PieceType::Pawn) => '♙',
-            (Color::Black, PieceType::King) => '♚',
-            (Color::Black, PieceType::Queen) => '♛',
-            (Color::Black, PieceType::Rook) => '♜',
-            (Color::Black, PieceType::Bishop) => '♝',
-            (Color::Black, PieceType::Knight) => '♞',
-            (Color::Black, PieceType::Pawn) => '♟',
+        match self.piece_type {
+            PieceType::King => '♚',
+            PieceType::Queen => '♛',
+            PieceType::Rook => '♜',
+            PieceType::Bishop => '♝',
+            PieceType::Knight => '♞',
+            PieceType::Pawn => '♟',
         }
     }
 }

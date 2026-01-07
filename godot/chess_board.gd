@@ -11,6 +11,10 @@ const DARK_SQUARE_COLOR = Color(0.72, 0.53, 0.38)
 const SELECTED_COLOR = Color(0.8, 0.8, 0.3, 0.5)
 const LEGAL_MOVE_COLOR = Color(0.3, 0.8, 0.3, 0.5)
 
+# Piece colors
+const PEARL_WHITE_COLOR = Color(0.97, 0.96, 0.94)
+const BLACK_COLOR = Color(0.0, 0.0, 0.0)
+
 # Game state
 var chess_game: ChessGame
 var selected_square: Vector2i = Vector2i(-1, -1)
@@ -110,7 +114,15 @@ func update_board():
 	for row in range(8):
 		for col in range(8):
 			var piece = chess_game.get_piece_at(row, col)
+			var piece_color = chess_game.get_piece_color_at(row, col)
+
 			piece_labels[row][col].text = piece
+
+			# Apply color based on piece color
+			if piece_color == "white":
+				piece_labels[row][col].add_theme_color_override("font_color", PEARL_WHITE_COLOR)
+			elif piece_color == "black":
+				piece_labels[row][col].add_theme_color_override("font_color", BLACK_COLOR)
 
 	queue_redraw()
 
