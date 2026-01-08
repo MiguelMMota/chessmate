@@ -37,6 +37,7 @@ var white_clock_label: Label
 var black_clock_label: Label
 var clock_timer: Timer
 var ai_toggle: CheckBox
+var clock_preset_dropdown: OptionButton
 
 func _ready():
 	DebugUtils.debug("ChessBoard _ready() called")
@@ -55,11 +56,11 @@ func _ready():
 	setup_status_label()
 	setup_promotion_panel()
 	setup_clock_display()
+	setup_clock_preset_dropdown()
 	setup_ai_toggle()
 
-	# For testing, start with a clock (5 minutes + 3 second increment)
-	# To start without a clock, use: chess_game.reset_game()
-	chess_game.reset_game_with_clock(300, 3)
+	# Start with default preset (3 | 2)
+	apply_clock_preset(1)
 
 	setup_clock_timer()
 
@@ -161,6 +162,27 @@ func setup_clock_timer():
 	add_child(clock_timer)
 	if chess_game.has_clock():
 		clock_timer.start()
+
+func setup_clock_preset_dropdown():
+	# Clock preset dropdown
+	clock_preset_dropdown = OptionButton.new()
+	clock_preset_dropdown.position = Vector2(BOARD_SIZE + 40, 260)
+	clock_preset_dropdown.custom_minimum_size = Vector2(150, 30)
+	clock_preset_dropdown.add_theme_font_size_override("font_size", 14)
+
+	# Add preset options
+	clock_preset_dropdown.add_item("1 min", 0)
+	clock_preset_dropdown.add_item("3 | 2", 1)
+	clock_preset_dropdown.add_item("5 min", 2)
+	clock_preset_dropdown.add_item("10 min", 3)
+	clock_preset_dropdown.add_item("15 | 10", 4)
+	clock_preset_dropdown.add_item("30 min", 5)
+
+	# Set default selection
+	clock_preset_dropdown.selected = 1  # "3 | 2"
+
+	clock_preset_dropdown.item_selected.connect(_on_clock_preset_changed)
+	add_child(clock_preset_dropdown)
 
 func setup_ai_toggle():
 	# AI toggle checkbox
@@ -456,6 +478,49 @@ func _on_reset_button_pressed():
 
 func _on_ai_toggle_changed(is_checked: bool):
 	ai_plays_black = is_checked
+	check_ai_turn()
+
+func _on_clock_preset_changed(index: int):
+	apply_clock_preset(index)
+
+func apply_clock_preset(preset_index: int):
+	var initial_time: int
+	var increment: int
+
+	match preset_index:
+		0:  # "1 min"
+			initial_time = 60
+			increment = 0
+		1:  # "3 | 2"
+			initial_time = 180
+			increment = 2
+		2:  # "5 min"
+			initial_time = 300
+			increment = 0
+		3:  # "10 min"
+			initial_time = 600
+			increment = 0
+		4:  # "15 | 10"
+			initial_time = 900
+			increment = 10
+		5:  # "30 min"
+			initial_time = 1800
+			increment = 0
+		_:  # Default to "3 | 2"
+			initial_time = 180
+			increment = 2
+
+	chess_game.reset_game_with_clock(initial_time, increment)
+	selected_square = Vector2i(-1, -1)
+	legal_moves.clear()
+	update_board()
+	update_status()
+	update_clock_display()
+
+	# Restart clock timer
+	if clock_timer:
+		clock_timer.start()
+
 	check_ai_turn()
 
 func check_ai_turn():
