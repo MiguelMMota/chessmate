@@ -126,8 +126,65 @@ impl ChessGame {
         result
     }
 
+    /// Check if moving the selected piece to the given position is a promotion
+    /// Returns true if the move would be a pawn promotion
+    #[func]
+    pub fn is_promotion_move(&self, row: i32, col: i32) -> bool {
+        let to = Position::new(row as i8, col as i8);
+
+        if let Some(from) = self.selected_position {
+            let legal_moves = generate_legal_moves(&self.board, from);
+
+            for mv in legal_moves {
+                if mv.to == to && mv.promotion.is_some() {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    /// Try to move the selected piece to the given position with a specific promotion piece
+    /// piece_type: "queen", "rook", "bishop", or "knight"
+    /// Returns true if the move was successful, false otherwise
+    #[func]
+    pub fn try_move_selected_with_promotion(&mut self, row: i32, col: i32, piece_type: GString) -> bool {
+        let to = Position::new(row as i8, col as i8);
+
+        if let Some(from) = self.selected_position {
+            let legal_moves = generate_legal_moves(&self.board, from);
+
+            let promotion_piece = match piece_type.to_string().to_lowercase().as_str() {
+                "queen" => PieceType::Queen,
+                "rook" => PieceType::Rook,
+                "bishop" => PieceType::Bishop,
+                "knight" => PieceType::Knight,
+                _ => return false,
+            };
+
+            // Check if this is a legal move
+            for mv in legal_moves {
+                if mv.to == to {
+                    let final_move = if mv.promotion.is_some() {
+                        Move::with_promotion(from, to, promotion_piece)
+                    } else {
+                        mv
+                    };
+
+                    self.board.make_move(final_move);
+                    self.selected_position = None;
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
     /// Try to move the selected piece to the given position
     /// Returns true if the move was successful, false otherwise
+    /// NOTE: This defaults to Queen for promotions - use try_move_selected_with_promotion for other pieces
     #[func]
     pub fn try_move_selected(&mut self, row: i32, col: i32) -> bool {
         let to = Position::new(row as i8, col as i8);
