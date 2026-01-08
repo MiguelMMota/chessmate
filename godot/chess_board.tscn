@@ -14,9 +14,9 @@ script = ExtResource("1_h5k3r")
 [node name="ResetButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 680.0
-offset_top = 60.0
-offset_right = 780.0
-offset_bottom = 100.0
+offset_top = 310.0
+offset_right = 810.0
+offset_bottom = 350.0
 text = "Reset Game"
 
 [connection signal="pressed" from="ResetButton" to="." method="_on_reset_button_pressed"]
