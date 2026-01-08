@@ -20,6 +20,7 @@ var chess_game: ChessGame
 var selected_square: Vector2i = Vector2i(-1, -1)
 var legal_moves: Array = []
 var ai_plays_black: bool = false
+var pending_promotion_move: Vector2i = Vector2i(-1, -1)
 
 # Drag state
 var is_dragging: bool = false
@@ -30,6 +31,8 @@ var drag_mouse_pos: Vector2 = Vector2.ZERO
 var board_container: Control
 var piece_labels: Array = []
 var status_label: Label
+var promotion_panel: Panel
+var promotion_buttons: Dictionary = {}
 var white_clock_label: Label
 var black_clock_label: Label
 var clock_timer: Timer
@@ -51,6 +54,7 @@ func _ready():
 	# Setup UI
 	setup_board()
 	setup_status_label()
+	setup_promotion_panel()
 	setup_clock_display()
 	setup_clock_preset_dropdown()
 	setup_ai_toggle()
@@ -100,6 +104,38 @@ func setup_status_label():
 	add_child(status_label)
 	update_status()
 
+func setup_promotion_panel():
+	# Create a panel for promotion selection
+	promotion_panel = Panel.new()
+	promotion_panel.position = Vector2(BOARD_SIZE / 2 - 150, BOARD_SIZE / 2 + 30)
+	promotion_panel.custom_minimum_size = Vector2(300, 150)
+	promotion_panel.visible = false
+	add_child(promotion_panel)
+
+	# Title label
+	var title_label = Label.new()
+	title_label.text = "Promote pawn to:"
+	title_label.position = Vector2(10, 10)
+	title_label.add_theme_font_size_override("font_size", 20)
+	promotion_panel.add_child(title_label)
+
+	# Create buttons for each piece type
+	var piece_types = ["Queen", "Rook", "Bishop", "Knight"]
+	var button_width = 130
+	var button_height = 40
+	var start_y = 50
+
+	for i in range(piece_types.size()):
+		var piece_type = piece_types[i]
+		var button = Button.new()
+		button.text = piece_type
+		button.custom_minimum_size = Vector2(button_width, button_height)
+		var col = i % 2
+		var row = i / 2
+		button.position = Vector2(10 + col * (button_width + 10), start_y + row * (button_height + 10))
+		button.pressed.connect(_on_promotion_selected.bind(piece_type.to_lower()))
+		promotion_panel.add_child(button)
+		promotion_buttons[piece_type.to_lower()] = button
 func setup_clock_display():
 	# White clock (bottom right of board)
 	white_clock_label = Label.new()
@@ -368,6 +404,15 @@ func handle_square_click(row: int, col: int):
 	# If we have a piece selected, try to move it
 	if selected_square.x >= 0:
 		DebugUtils.debug("Piece already selected, trying to move to (%d, %d)" % [row, col])
+
+		# Check if this is a promotion move
+		if chess_game.is_promotion_move(row, col):
+			# Show promotion dialog
+			DebugUtils.debug("This is a promotion move, showing dialog")
+			pending_promotion_move = Vector2i(row, col)
+			promotion_panel.visible = true
+			return
+
 		if chess_game.try_move_selected(row, col):
 			# Move was successful
 			DebugUtils.debug("Move successful!")
@@ -403,6 +448,25 @@ func handle_square_click(row: int, col: int):
 			queue_redraw()
 		else:
 			DebugUtils.debug("Failed to select piece (empty square or wrong color)")
+
+func _on_promotion_selected(piece_type: String):
+	DebugUtils.debug_var("Promotion piece selected", piece_type)
+
+	# Hide the promotion panel
+	promotion_panel.visible = false
+
+	# Execute the promotion move
+	if pending_promotion_move.x >= 0:
+		if chess_game.try_move_selected_with_promotion(pending_promotion_move.x, pending_promotion_move.y, piece_type):
+			DebugUtils.debug("Promotion move successful!")
+			selected_square = Vector2i(-1, -1)
+			legal_moves.clear()
+			pending_promotion_move = Vector2i(-1, -1)
+			update_board()
+			update_status()
+		else:
+			DebugUtils.debug("Promotion move failed!")
+			pending_promotion_move = Vector2i(-1, -1)
 
 func _on_reset_button_pressed():
 	chess_game.reset_game()
