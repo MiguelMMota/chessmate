@@ -3,3 +3,4 @@
 
 pub mod evaluation;
 pub mod search;
+pub mod simple_opponent;
