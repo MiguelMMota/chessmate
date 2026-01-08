@@ -77,11 +77,13 @@ func setup_board():
 	add_child(board_container)
 
 	# Create labels for pieces
+	# Flip board so white is at bottom (row 0 at bottom visually)
 	for row in range(8):
 		var row_array = []
 		for col in range(8):
 			var label = Label.new()
-			label.position = Vector2(col * SQUARE_SIZE, row * SQUARE_SIZE)
+			var display_row = 7 - row  # Flip vertically so white is at bottom
+			label.position = Vector2(col * SQUARE_SIZE, display_row * SQUARE_SIZE)
 			label.custom_minimum_size = Vector2(SQUARE_SIZE, SQUARE_SIZE)
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -137,7 +139,7 @@ func setup_promotion_panel():
 		promotion_panel.add_child(button)
 		promotion_buttons[piece_type.to_lower()] = button
 func setup_clock_display():
-	# White clock (bottom right of board)
+	# White clock (bottom right - where white pieces start after flip)
 	white_clock_label = Label.new()
 	white_clock_label.position = Vector2(BOARD_SIZE + 40, 60 + BOARD_SIZE - 60)
 	white_clock_label.custom_minimum_size = Vector2(150, 50)
@@ -146,7 +148,7 @@ func setup_clock_display():
 	white_clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(white_clock_label)
 
-	# Black clock (top right of board)
+	# Black clock (top right - where black pieces start after flip)
 	black_clock_label = Label.new()
 	black_clock_label.position = Vector2(BOARD_SIZE + 40, 60)
 	black_clock_label.custom_minimum_size = Vector2(150, 50)
@@ -235,21 +237,23 @@ func _on_clock_tick():
 		clock_timer.stop()
 
 func _draw():
-	# Draw the chess board squares
+	# Draw the chess board squares (flipped so white is at bottom)
 	for row in range(8):
 		for col in range(8):
 			var is_light = (row + col) % 2 == 0
 			var color = LIGHT_SQUARE_COLOR if is_light else DARK_SQUARE_COLOR
+			var display_row = 7 - row  # Flip vertically
 			var rect = Rect2(
-				Vector2(20 + col * SQUARE_SIZE, 60 + row * SQUARE_SIZE),
+				Vector2(20 + col * SQUARE_SIZE, 60 + display_row * SQUARE_SIZE),
 				Vector2(SQUARE_SIZE, SQUARE_SIZE)
 			)
 			draw_rect(rect, color)
 
 	# Highlight selected square
 	if selected_square.x >= 0 and selected_square.y >= 0:
+		var display_row = 7 - selected_square.x  # Flip vertically
 		var rect = Rect2(
-			Vector2(20 + selected_square.y * SQUARE_SIZE, 60 + selected_square.x * SQUARE_SIZE),
+			Vector2(20 + selected_square.y * SQUARE_SIZE, 60 + display_row * SQUARE_SIZE),
 			Vector2(SQUARE_SIZE, SQUARE_SIZE)
 		)
 		draw_rect(rect, SELECTED_COLOR)
@@ -258,8 +262,9 @@ func _draw():
 	for i in range(0, legal_moves.size(), 2):
 		var row = legal_moves[i]
 		var col = legal_moves[i + 1]
+		var display_row = 7 - row  # Flip vertically
 		var rect = Rect2(
-			Vector2(20 + col * SQUARE_SIZE, 60 + row * SQUARE_SIZE),
+			Vector2(20 + col * SQUARE_SIZE, 60 + display_row * SQUARE_SIZE),
 			Vector2(SQUARE_SIZE, SQUARE_SIZE)
 		)
 		draw_rect(rect, LEGAL_MOVE_COLOR)
