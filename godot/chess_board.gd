@@ -19,6 +19,7 @@ const BLACK_COLOR = Color(0.0, 0.0, 0.0)
 var chess_game: ChessGame
 var selected_square: Vector2i = Vector2i(-1, -1)
 var legal_moves: Array = []
+var ai_plays_black: bool = false
 
 # UI nodes
 var board_container: Control
@@ -27,6 +28,7 @@ var status_label: Label
 var white_clock_label: Label
 var black_clock_label: Label
 var clock_timer: Timer
+var ai_toggle: CheckBox
 
 func _ready():
 	DebugUtils.debug("ChessBoard _ready() called")
@@ -44,6 +46,7 @@ func _ready():
 	setup_board()
 	setup_status_label()
 	setup_clock_display()
+	setup_ai_toggle()
 
 	# For testing, start with a clock (5 minutes + 3 second increment)
 	# To start without a clock, use: chess_game.reset_game()
@@ -117,6 +120,16 @@ func setup_clock_timer():
 	add_child(clock_timer)
 	if chess_game.has_clock():
 		clock_timer.start()
+
+func setup_ai_toggle():
+	# AI toggle checkbox
+	ai_toggle = CheckBox.new()
+	ai_toggle.position = Vector2(BOARD_SIZE + 40, 200)
+	ai_toggle.custom_minimum_size = Vector2(150, 30)
+	ai_toggle.text = "AI plays Black"
+	ai_toggle.add_theme_font_size_override("font_size", 16)
+	ai_toggle.toggled.connect(_on_ai_toggle_changed)
+	add_child(ai_toggle)
 
 func update_clock_display():
 	if chess_game.has_clock():
@@ -265,6 +278,7 @@ func handle_square_click(row: int, col: int):
 			update_board()
 			update_status()
 			update_clock_display()
+			check_ai_turn()
 		else:
 			DebugUtils.debug("Move failed, trying to select new piece")
 			# Try to select the clicked square instead
@@ -298,3 +312,22 @@ func _on_reset_button_pressed():
 	legal_moves.clear()
 	update_board()
 	update_status()
+	check_ai_turn()
+
+func _on_ai_toggle_changed(is_checked: bool):
+	ai_plays_black = is_checked
+	check_ai_turn()
+
+func check_ai_turn():
+	# If it's the AI's turn and game is not over, make an AI move
+	if ai_plays_black and chess_game.get_current_turn() == "black" and not chess_game.is_game_over():
+		make_ai_move()
+
+func make_ai_move():
+	# Small delay to make the AI move visible
+	await get_tree().create_timer(0.3).timeout
+
+	if chess_game.make_ai_move():
+		update_board()
+		update_status()
+		update_clock_display()

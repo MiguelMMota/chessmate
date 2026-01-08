@@ -3,6 +3,7 @@ use super::board::{Board, GameStatus};
 use super::piece::{Position, Move, PieceType, Color};
 use super::rules::{generate_legal_moves, get_game_status};
 use super::chess_clock::ChessClockSettings;
+use crate::ai::simple_opponent::select_weighted_move;
 use std::collections::HashMap;
 
 #[derive(GodotClass)]
@@ -235,5 +236,18 @@ impl ChessGame {
     #[func]
     pub fn has_clock(&self) -> bool {
         self.board.has_clock()
+    }
+
+    /// Make an AI move for the current player
+    /// Returns true if a move was made, false if no legal moves available
+    #[func]
+    pub fn make_ai_move(&mut self) -> bool {
+        if let Some(mv) = select_weighted_move(&self.board) {
+            self.board.make_move(mv);
+            self.selected_position = None;
+            true
+        } else {
+            false
+        }
     }
 }
