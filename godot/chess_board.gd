@@ -22,6 +22,11 @@ var legal_moves: Array = []
 var ai_plays_black: bool = false
 var pending_promotion_move: Vector2i = Vector2i(-1, -1)
 
+# Drag state
+var is_dragging: bool = false
+var drag_start_square: Vector2i = Vector2i(-1, -1)
+var drag_mouse_pos: Vector2 = Vector2.ZERO
+
 # UI nodes
 var board_container: Control
 var piece_labels: Array = []
@@ -237,6 +242,25 @@ func _draw():
 		)
 		draw_rect(rect, LEGAL_MOVE_COLOR)
 
+	# Draw dragged piece following the cursor
+	if is_dragging and drag_start_square.x >= 0:
+		var piece = chess_game.get_piece_at(drag_start_square.x, drag_start_square.y)
+		var piece_color = chess_game.get_piece_color_at(drag_start_square.x, drag_start_square.y)
+
+		if piece != "":
+			# Create a font for rendering the dragged piece
+			var font = get_theme_default_font()
+			var font_size = 48
+
+			# Calculate position centered on cursor
+			var text_size = font.get_string_size(piece, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
+			var draw_pos = drag_mouse_pos - text_size / 2
+
+			# Draw piece with slight transparency to show it's being dragged
+			var color = PEARL_WHITE_COLOR if piece_color == "white" else BLACK_COLOR
+			color.a = 0.8  # Slight transparency
+			draw_string(font, draw_pos, piece, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, color)
+
 func update_board():
 	# Update all piece labels
 	for row in range(8):
@@ -244,7 +268,11 @@ func update_board():
 			var piece = chess_game.get_piece_at(row, col)
 			var piece_color = chess_game.get_piece_color_at(row, col)
 
-			piece_labels[row][col].text = piece
+			# Hide piece if it's being dragged
+			if is_dragging and drag_start_square.x == row and drag_start_square.y == col:
+				piece_labels[row][col].text = ""
+			else:
+				piece_labels[row][col].text = piece
 
 			# Apply color based on piece color
 			if piece_color == "white":
@@ -277,27 +305,75 @@ func update_status():
 			status_label.text = "%s to move" % turn.capitalize()
 
 func _gui_input(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		DebugUtils.debug_var("Mouse button left pressed at position", event.position)
+	# Check if game is over
+	if chess_game.is_game_over():
+		return
 
-		# Check if game is over
-		if chess_game.is_game_over():
-			DebugUtils.debug("Game is over, ignoring click")
-			return
-
-		# Convert mouse position to board coordinates
+	# Handle mouse button press (start drag or click)
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		var local_pos = event.position - Vector2(20, 60)
-		DebugUtils.debug_var("Local position", local_pos)
 
+		# Check if within board bounds
 		if local_pos.x < 0 or local_pos.y < 0 or local_pos.x >= BOARD_SIZE or local_pos.y >= BOARD_SIZE:
-			DebugUtils.debug("Click outside board bounds")
 			return
 
 		var col = int(local_pos.x / SQUARE_SIZE)
 		var row = int(local_pos.y / SQUARE_SIZE)
-		DebugUtils.debug_vars({"Calculated row": row, "col": col})
 
-		handle_square_click(row, col)
+		if event.pressed:
+			# Mouse button pressed - start potential drag
+			DebugUtils.debug_var("Mouse button pressed at", Vector2i(row, col))
+			var piece = chess_game.get_piece_at(row, col)
+			var piece_color = chess_game.get_piece_color_at(row, col)
+			var current_turn = chess_game.get_current_turn()
+
+			# Only start drag if there's a piece of the current player's color
+			if piece != "" and piece_color == current_turn:
+				is_dragging = true
+				drag_start_square = Vector2i(row, col)
+				drag_mouse_pos = event.position
+
+				# Select the piece
+				chess_game.select_piece(row, col)
+				selected_square = Vector2i(row, col)
+				legal_moves = chess_game.get_legal_moves_for_selected()
+				queue_redraw()
+		else:
+			# Mouse button released - complete drag or click
+			if is_dragging:
+				DebugUtils.debug("Mouse button released, completing drag")
+				# Try to move the piece to the drop location
+				handle_piece_drop(row, col)
+				is_dragging = false
+				drag_start_square = Vector2i(-1, -1)
+				queue_redraw()
+			else:
+				# Regular click (not a drag)
+				handle_square_click(row, col)
+
+	# Handle mouse motion (for dragging)
+	elif event is InputEventMouseMotion and is_dragging:
+		drag_mouse_pos = event.position
+		queue_redraw()
+
+func handle_piece_drop(row: int, col: int):
+	DebugUtils.debug_vars({"handle_piece_drop row": row, "col": col})
+
+	# Try to move the piece from drag_start_square to (row, col)
+	if chess_game.try_move_selected(row, col):
+		DebugUtils.debug("Drop successful - piece moved!")
+		selected_square = Vector2i(-1, -1)
+		legal_moves.clear()
+		update_board()
+		update_status()
+		update_clock_display()
+		check_ai_turn()
+	else:
+		DebugUtils.debug("Drop failed - invalid move")
+		# Deselect the piece
+		chess_game.deselect_piece()
+		selected_square = Vector2i(-1, -1)
+		legal_moves.clear()
 
 func handle_square_click(row: int, col: int):
 	DebugUtils.debug_vars({"handle_square_click row": row, "col": col})
