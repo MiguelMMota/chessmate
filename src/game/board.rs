@@ -1,7 +1,8 @@
 use super::piece::{Color, Piece, PieceType, Position, Move};
 use super::chess_clock::{ChessClock, ChessClockSettings};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameStatus {
     Ongoing,
     Check,
@@ -11,7 +12,7 @@ pub enum GameStatus {
     TimeLoss(Color), // Player who lost on time
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CastlingRights {
     pub white_kingside: bool,
     pub white_queenside: bool,
@@ -39,6 +40,7 @@ pub struct Board {
     halfmove_clock: u32,
     fullmove_number: u32,
     chess_clock: Option<ChessClock>,
+    move_history: Vec<Move>,  // Track all moves for replay/undo
 }
 
 impl Board {
@@ -55,6 +57,7 @@ impl Board {
             halfmove_clock: 0,
             fullmove_number: 1,
             chess_clock: clock_settings.map(ChessClock::new),
+            move_history: Vec::new(),
         };
         board.setup_initial_position();
 
@@ -261,6 +264,9 @@ impl Board {
         // Switch turns
         self.current_turn = self.current_turn.opposite();
 
+        // Record move in history
+        self.move_history.push(mv);
+
         true
     }
 
@@ -323,6 +329,16 @@ impl Board {
     /// Check if the board has a chess clock enabled
     pub fn has_clock(&self) -> bool {
         self.chess_clock.is_some()
+    }
+
+    /// Get the move history
+    pub fn move_history(&self) -> &[Move] {
+        &self.move_history
+    }
+
+    /// Get the number of moves played
+    pub fn move_count(&self) -> usize {
+        self.move_history.len()
     }
 }
 
