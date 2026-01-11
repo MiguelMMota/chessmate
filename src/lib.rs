@@ -1,21 +1,18 @@
-use godot::prelude::*;
-
-// Module declarations
-mod game;
-mod ai;
+// Pure Rust game logic modules - NO Godot dependencies
+pub mod game;
+pub mod ai;
 mod networking;
 mod cards;
 
-// Main extension struct
-struct ChessMateExtension;
+// FFI layer for external clients (Godot, web, etc.)
+pub mod ffi;
 
-#[gdextension]
-unsafe impl ExtensionLibrary for ChessMateExtension {}
+// Godot-specific bridge (only compiled when godot feature is enabled)
+#[cfg(feature = "godot")]
+mod godot_bridge;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_basic() {
         assert_eq!(2 + 2, 4);

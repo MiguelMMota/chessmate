@@ -345,7 +345,8 @@ func _gui_input(event):
 			return
 
 		var col = int(local_pos.x / SQUARE_SIZE)
-		var row = int(local_pos.y / SQUARE_SIZE)
+		var display_row = int(local_pos.y / SQUARE_SIZE)
+		var row = 7 - display_row  # Convert display row to actual board row
 
 		if event.pressed:
 			# Mouse button pressed - start potential drag
