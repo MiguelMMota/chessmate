@@ -16,6 +16,55 @@ Players must balance traditional chess tactics with resource management, card dr
 - **Build System**: Cargo (Rust) + Godot build pipeline
 - **Version Control**: Git/GitHub
 
+## Architecture & Decoupling Requirements
+
+**⚠️ CRITICAL: This project enforces strict architectural separation between server and client code.**
+
+### Core Principles
+
+1. **Rust is Client-Agnostic**
+   - The Rust codebase (`src/`) contains ONLY game logic, server code, and core business rules
+   - Rust code MUST NOT import, reference, or depend on any client-specific types, frameworks, or APIs
+   - Rust code MUST NOT know about Godot, UI frameworks, rendering, or any presentation layer concerns
+   - All Rust dependencies in `Cargo.toml` must be platform-agnostic libraries (no GUI, no rendering)
+
+2. **FFI Layer as the Boundary**
+   - ALL communication between Rust (server/logic) and clients (Godot, future web clients, etc.) happens through the FFI layer in `src/lib.rs`
+   - The FFI layer is a **thin, minimal interface** exposing only essential functions
+   - FFI functions should be called **infrequently** and handle **complete operations** (not granular state changes)
+   - Data crossing the FFI boundary must use simple, platform-agnostic types (primitives, POD structs, C-compatible representations)
+
+3. **Client Responsibilities**
+   - Godot (GDScript) and any future clients are responsible for:
+     - Presentation layer (UI, rendering, animations, audio)
+     - Input capture and conversion to action data
+     - Visual feedback and effects
+   - Clients call into Rust for game logic but never the reverse
+
+### What This Means for Development
+
+**✅ DO:**
+- Implement game rules, state management, and AI in pure Rust
+- Use platform-agnostic Rust libraries (serde, tokio, rand, etc.)
+- Expose minimal, batch-oriented functions through FFI (`process_action`, `get_game_state`)
+- Keep FFI data structures simple and C-compatible
+
+**❌ DON'T:**
+- Add Godot types or dependencies to Rust code
+- Import UI frameworks, rendering libraries, or windowing systems in Rust
+- Create fine-grained FFI functions that require frequent calls
+- Make Rust code aware of how it will be presented or rendered
+
+### Why This Matters
+
+This architecture enables:
+- **Portability**: The same Rust logic can power Godot desktop clients, web clients, mobile apps, or headless servers
+- **Testability**: Pure Rust logic can be tested without any client dependencies
+- **Performance**: Minimal FFI crossing reduces overhead
+- **Maintainability**: Clear separation of concerns makes the codebase easier to understand and modify
+
+**If you're adding a new feature, ask yourself: "Could this Rust code run in a headless server with zero knowledge of how the game is displayed?" If the answer is no, you're violating the architecture.**
+
 ## Core Features
 
 ### Gameplay
@@ -72,9 +121,9 @@ Players must balance traditional chess tactics with resource management, card dr
 
 ## Building and Running
 
-The project uses a **decoupled architecture** with separate Rust and Godot components:
-- **Rust library** (root directory) - Game logic, compiles to a shared library
-- **Godot project** (`godot/` directory) - Presentation layer, loads the Rust library via GDExtension
+The project uses a **strictly decoupled architecture** with separate Rust and Godot components (see [Architecture & Decoupling Requirements](#architecture--decoupling-requirements) for critical guidelines):
+- **Rust library** (root directory) - Pure game logic and server code, compiles to a shared library
+- **Godot project** (`godot/` directory) - Presentation layer only, loads the Rust library via GDExtension FFI
 
 ### Build Rust Library
 
@@ -240,8 +289,11 @@ chessmate/
 
 ## Development Guidelines
 
+- **CRITICAL**: Maintain strict architectural decoupling (see [Architecture & Decoupling Requirements](#architecture--decoupling-requirements))
+- **Never** add client-specific dependencies to Rust code
+- **Always** communicate between Rust and clients through the FFI layer only
 - Follow SOLID principles, especially Single Responsibility
-- Write unit tests for all game logic
+- Write unit tests for all game logic (Rust tests should run without any client dependencies)
 - Document public APIs and complex algorithms
 - Use meaningful commit messages
 - Ensure builds pass before committing
