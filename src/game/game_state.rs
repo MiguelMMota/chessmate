@@ -6,6 +6,7 @@ use crate::ai::simple_opponent::select_weighted_move;
 use std::collections::HashMap;
 
 /// Pure Rust game state - no Godot dependencies
+#[derive(Debug)]
 pub struct ChessGame {
     board: Board,
     selected_position: Option<Position>,
@@ -226,5 +227,22 @@ impl ChessGame {
         } else {
             false
         }
+    }
+
+    /// Get a reference to the internal board (for server/network use)
+    pub fn board(&self) -> &Board {
+        &self.board
+    }
+
+    /// Get the board squares as a 2D array (for serialization)
+    pub fn board_squares(&self) -> [[Option<super::piece::Piece>; 8]; 8] {
+        let mut squares = [[None; 8]; 8];
+        for row in 0..8 {
+            for col in 0..8 {
+                let pos = Position::new(row, col);
+                squares[row as usize][col as usize] = self.board.get_piece(pos);
+            }
+        }
+        squares
     }
 }
