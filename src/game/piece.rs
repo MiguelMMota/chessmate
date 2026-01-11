@@ -1,7 +1,4 @@
-use godot::prelude::*;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, GodotConvert, Var, Export)]
-#[godot(via = GString)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PieceType {
     Pawn,
     Knight,
@@ -11,8 +8,7 @@ pub enum PieceType {
     King,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, GodotConvert, Var, Export)]
-#[godot(via = GString)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Color {
     White,
     Black,

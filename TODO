@@ -1,0 +1,20 @@
+See chess clock PR: https://github.com/MiguelMMota/chessmate/pull/1/files. Lots of decisions are tied to a 2-player model. E.g.: the clocks are called "white clock" and "black clock", and have fixed positions on the screen.
+
+UI for setting up clock
+
+is it normal for rust tests to live in the actual files they're testing?
+
+what does [func] do?
+
+is stalemate correctly detected and flagged?
+
+URGENT
+
+[ ] Fix piece selection - sometimes I have to click twice
+
+
+TEST
+[ ] AI opponent
+[ ] Draggable pieces
+[ ] Clena Clock UI
+[ ] Presettable clock UI
