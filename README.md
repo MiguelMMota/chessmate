@@ -72,102 +72,171 @@ Players must balance traditional chess tactics with resource management, card dr
 
 ## Building and Running
 
-### Build Rust Extension
+The project uses a **decoupled architecture** with separate Rust and Godot components:
+- **Rust library** (root directory) - Game logic, compiles to a shared library
+- **Godot project** (`godot/` directory) - Presentation layer, loads the Rust library via GDExtension
 
-The project is configured to build for **Apple Silicon (ARM64)** by default on macOS.
+### Build Rust Library
 
-Compile the Rust GDExtension library:
+The Rust library compiles to a shared library (`.dylib` on macOS, `.dll` on Windows, `.so` on Linux) that Godot loads at runtime.
 
+**Build for debug:**
 ```bash
 cargo build
 ```
 
-For optimized release builds:
-
+**Build for release (optimized):**
 ```bash
 cargo build --release
 ```
 
-The compiled library will be placed in:
-- **macOS (ARM64)**: `target/aarch64-apple-darwin/debug/` or `target/aarch64-apple-darwin/release/`
-- **macOS (Intel)**: `target/x86_64-apple-darwin/debug/` or `target/x86_64-apple-darwin/release/`
-- **Windows**: `target/x86_64-pc-windows-msvc/debug/` or `target/x86_64-pc-windows-msvc/release/`
-- **Linux**: `target/x86_64-unknown-linux-gnu/debug/` or `target/x86_64-unknown-linux-gnu/release/`
+**Platform-specific output locations:**
+- **macOS (ARM64)**: `target/aarch64-apple-darwin/debug/libchessmate.dylib`
+- **macOS (Intel)**: `target/x86_64-apple-darwin/debug/libchessmate.dylib`
+- **Windows**: `target/debug/chessmate.dll`
+- **Linux**: `target/debug/libchessmate.so`
 
 **Note**: The `.cargo/config.toml` sets the default target to `aarch64-apple-darwin` for Apple Silicon Macs. Update this file if building on a different platform.
 
-### Running in Godot
+### Run Tests
 
-1. **Open Project in Godot**:
-   ```bash
-   godot --path . --editor
-   ```
+Run Rust unit tests:
+```bash
+cargo test
+```
 
-2. **Run from Editor**: Press F5 or click the Play button in the Godot editor
+Run with test output visible:
+```bash
+cargo test -- --nocapture
+```
 
-3. **Run from Command Line**:
-   ```bash
-   godot --path .
-   ```
+### Run the Godot Project
+
+The Godot project is located in the `godot/` subdirectory and automatically loads the compiled Rust library.
+
+**Open in Godot Editor:**
+```bash
+godot --path godot --editor
+```
+
+Or on macOS with Godot in Applications:
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --path godot --editor
+```
+
+**Run the game (headless, for validation):**
+```bash
+godot --path godot --headless --quit
+```
+
+**Run the game (with GUI):**
+```bash
+godot --path godot
+```
+
+Or from the Godot Editor: Press F5 or click the Play button
 
 ### Development Workflow
 
-1. Make changes to Rust code in `src/`
-2. Rebuild the extension: `cargo build`
-3. Reload the project in Godot (the editor will detect changes)
-4. Test changes in the editor or by running the game
+1. **Make changes** to Rust code in `src/`
+2. **Rebuild** the Rust library:
+   ```bash
+   cargo build
+   ```
+3. **Test** your changes:
+   ```bash
+   cargo test
+   ```
+4. **Reload** in Godot:
+   - If Godot Editor is open, it will automatically detect the library changes
+   - Or restart the Godot Editor
+5. **Run** the game from Godot to test gameplay
+
+### Quick Start Commands
+
+**Build everything and validate:**
+```bash
+cargo build && godot --path godot --headless --quit
+```
+
+**Build and test Rust library:**
+```bash
+cargo build && cargo test
+```
+
+**Full verification (build + tests + Godot validation):**
+```bash
+cargo build && cargo test && godot --path godot --headless --quit
+```
 
 ## Testing
 
 ### Rust Unit Tests
 
-Run Rust unit tests:
+Test the Rust game logic (runs independently of Godot):
 
 ```bash
 cargo test
 ```
 
 With verbose output:
-
 ```bash
 cargo test -- --nocapture
 ```
 
+Run a specific test:
+```bash
+cargo test test_name
+```
+
 ### Integration Tests
 
-Run integration tests that involve Godot:
-
+Run integration tests (located in `tests/` directory):
 ```bash
 cargo test --test integration_tests
 ```
 
-### Game Testing
+### Game Testing in Godot
 
-Test gameplay features directly in Godot:
+Test gameplay and UI directly in the Godot editor:
 
-1. Open the project in Godot editor
-2. Navigate to specific test scenes in `scenes/tests/`
-3. Run individual scenes to test specific features
+1. Build the Rust library: `cargo build`
+2. Open the Godot project: `godot --path godot --editor`
+3. Press F5 to run the game or run specific test scenes from `godot/scenes/tests/`
 
 ## Project Structure
 
 ```
 chessmate/
-├── src/                    # Rust source code
-│   ├── lib.rs             # GDExtension entry point
-│   ├── game/              # Core game logic
-│   ├── ai/                # AI and game evaluation
-│   ├── networking/        # Online multiplayer
-│   └── cards/             # Card system
-├── godot/                 # Godot project files
-│   ├── scenes/            # Game scenes
-│   ├── scripts/           # GDScript files (if any)
-│   ├── assets/            # Art, audio, etc.
-│   └── project.godot      # Godot project config
-├── tests/                 # Rust integration tests
-├── Cargo.toml            # Rust dependencies
-└── README.md             # This file
+├── src/                          # Rust source code (game logic)
+│   ├── lib.rs                   # GDExtension entry point & FFI layer
+│   ├── game/                    # Core game logic
+│   ├── ai/                      # AI and game evaluation
+│   ├── networking/              # Online multiplayer (server)
+│   └── cards/                   # Card system logic
+│
+├── godot/                       # Godot project (presentation layer)
+│   ├── project.godot            # Godot project configuration
+│   ├── chessmate.gdextension    # Links to compiled Rust library
+│   ├── chess_board.gd           # Main game board (GDScript client)
+│   ├── debug_utils.gd           # Debug utilities
+│   ├── scenes/                  # Game scenes (.tscn files)
+│   ├── scripts/                 # Additional GDScript files
+│   └── assets/                  # Art, audio, fonts, etc.
+│
+├── tests/                       # Rust integration tests
+├── scripts/                     # Build and utility scripts
+├── .cargo/config.toml          # Cargo build configuration (target platform)
+├── .claude/                     # Claude Code commands and config
+├── Cargo.toml                   # Rust dependencies and build config
+└── README.md                    # This file
 ```
+
+**Key Files:**
+- `src/lib.rs`: FFI boundary between Rust and Godot
+- `godot/chessmate.gdextension`: Configuration that tells Godot where to find the compiled Rust library
+- `godot/chess_board.gd`: Main Godot script that calls into Rust for game logic
+- `Cargo.toml`: Defines the library type (`cdylib` for shared library, `rlib` for Rust tests)
 
 ## Development Guidelines
 
