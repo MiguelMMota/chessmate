@@ -1,28 +1,29 @@
 // FFI layer for communicating with external clients
 // This layer should be thin and performant
 
-use crate::game::game_state::ChessGame;
 use crate::game::board::GameStatus;
+use crate::game::game_state::ChessGame;
 use crate::game::piece::{Color, PieceType};
+use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::ptr;
-use std::collections::HashMap;
-use std::sync::{Mutex, LazyLock};
+use std::sync::{LazyLock, Mutex};
 
 // Global game state storage
 // In a real implementation, you'd manage multiple game instances
-static GAME_INSTANCES: LazyLock<Mutex<HashMap<u32, ChessGame>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static GAME_INSTANCES: LazyLock<Mutex<HashMap<u32, ChessGame>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 static NEXT_GAME_ID: LazyLock<Mutex<u32>> = LazyLock::new(|| Mutex::new(0));
 
 #[repr(C)]
 pub struct GameState {
     pub game_id: u32,
-    pub current_turn: u8,  // 0 = White, 1 = Black
-    pub status: u8,  // 0 = Ongoing, 1 = Check, 2 = Checkmate White, 3 = Checkmate Black, 4 = Stalemate, 5 = Draw, 6 = TimeLoss White, 7 = TimeLoss Black
-    pub white_time: i32,  // -1 if no clock
-    pub black_time: i32,  // -1 if no clock
-    pub board_state: *mut c_char,  // JSON representation of board state
+    pub current_turn: u8,         // 0 = White, 1 = Black
+    pub status: u8, // 0 = Ongoing, 1 = Check, 2 = Checkmate White, 3 = Checkmate Black, 4 = Stalemate, 5 = Draw, 6 = TimeLoss White, 7 = TimeLoss Black
+    pub white_time: i32, // -1 if no clock
+    pub black_time: i32, // -1 if no clock
+    pub board_state: *mut c_char, // JSON representation of board state
 }
 
 #[repr(C)]
@@ -55,7 +56,11 @@ pub extern "C" fn initialize_game(initial_time_seconds: i32, increment_seconds: 
 /// action_type: 0 = MovePiece
 /// data: JSON string with action data
 #[no_mangle]
-pub extern "C" fn process_action(game_id: u32, action_type: u8, data: *const c_char) -> ActionResult {
+pub extern "C" fn process_action(
+    game_id: u32,
+    action_type: u8,
+    data: *const c_char,
+) -> ActionResult {
     let mut instances = GAME_INSTANCES.lock().unwrap();
 
     let game = match instances.get_mut(&game_id) {
@@ -172,7 +177,11 @@ pub extern "C" fn process_action(game_id: u32, action_type: u8, data: *const c_c
             ActionResult {
                 success,
                 game_state: get_game_state_from_game(game_id, game),
-                error_message: if success { ptr::null_mut() } else { create_c_string("Invalid move") },
+                error_message: if success {
+                    ptr::null_mut()
+                } else {
+                    create_c_string("Invalid move")
+                },
             }
         }
         _ => ActionResult {
@@ -226,7 +235,11 @@ pub extern "C" fn make_ai_move(game_id: u32) -> ActionResult {
     ActionResult {
         success,
         game_state: get_game_state_from_game(game_id, game),
-        error_message: if success { ptr::null_mut() } else { create_c_string("No legal moves available") },
+        error_message: if success {
+            ptr::null_mut()
+        } else {
+            create_c_string("No legal moves available")
+        },
     }
 }
 
@@ -285,7 +298,10 @@ fn get_game_state_from_game(game_id: u32, game: &ChessGame) -> GameState {
                     Some(Color::Black) => "black",
                     None => continue,
                 };
-                pieces.push(format!("{{\"row\":{},\"col\":{},\"piece\":\"{}\",\"color\":\"{}\"}}", row, col, piece, color_str));
+                pieces.push(format!(
+                    "{{\"row\":{},\"col\":{},\"piece\":\"{}\",\"color\":\"{}\"}}",
+                    row, col, piece, color_str
+                ));
             }
         }
     }

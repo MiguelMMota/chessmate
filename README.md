@@ -287,6 +287,109 @@ chessmate/
 - `godot/chess_board.gd`: Main Godot script that calls into Rust for game logic
 - `Cargo.toml`: Defines the library type (`cdylib` for shared library, `rlib` for Rust tests)
 
+## Network Multiplayer
+
+ChessMate supports real-time multiplayer where players on different networks can play together. The system uses a centralized game server with WebSocket communication for low-latency gameplay.
+
+### Architecture Overview
+
+- **Server**: Rust-based game server with authoritative validation
+- **Protocol**: REST API for matchmaking + WebSocket for gameplay
+- **Clients**: CLI client for testing, Godot client (future)
+- **Database**: PostgreSQL for persistent state (future)
+
+For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+### Quick Start: Local Testing
+
+Test multiplayer locally with server + 2 clients:
+
+```bash
+./scripts/run_local_dev.sh
+```
+
+This script automatically:
+- Builds the server and client binaries
+- Starts the game server on port 3000
+- Launches 2 CLI clients that auto-connect
+- Handles cleanup on exit (Ctrl+C)
+
+### Manual Setup
+
+**1. Start the server:**
+```bash
+./scripts/run_server.sh
+```
+
+The server will listen on `ws://localhost:3000/ws`
+
+**2. Connect clients:**
+
+In separate terminals, run:
+```bash
+./scripts/run_client.sh ws://localhost:3000/ws player1
+./scripts/run_client.sh ws://localhost:3000/ws player2
+```
+
+Clients will automatically join the matchmaking queue and be paired when 2+ players are waiting.
+
+### Docker Setup
+
+Run everything in isolated containers:
+
+**Start server and database:**
+```bash
+docker-compose up
+```
+
+**Run with test clients:**
+```bash
+docker-compose --profile testing up
+```
+
+This starts:
+- PostgreSQL database
+- Game server
+- 2 CLI test clients (with `testing` profile)
+
+**Stop and clean up:**
+```bash
+docker-compose down -v
+```
+
+### Environment Variables
+
+Configure the server and clients with these environment variables:
+
+**Server:**
+- `DATABASE_URL`: PostgreSQL connection string (default: `postgres://postgres:postgres@localhost/chessmate`)
+- `RUST_LOG`: Logging level (default: `info`)
+
+**Client:**
+- `SERVER_URL`: WebSocket server URL (default: `ws://localhost:3000/ws`)
+- `PLAYER_ID`: Unique player identifier (default: auto-generated)
+
+Example:
+```bash
+export SERVER_URL="ws://your-server.com:3000/ws"
+export PLAYER_ID="alice"
+./scripts/run_client.sh
+```
+
+### CLI Client Commands
+
+The CLI client displays the board and game state automatically. Future versions will support interactive commands:
+
+- `move <from> <to>` - Make a move (e.g., `move e2 e4`)
+- `resign` - Resign from the current game
+- `quit` - Disconnect and exit
+
+### Deployment
+
+For production deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+For development and testing workflows, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 ## Development Guidelines
 
 - **CRITICAL**: Maintain strict architectural decoupling (see [Architecture & Decoupling Requirements](#architecture--decoupling-requirements))

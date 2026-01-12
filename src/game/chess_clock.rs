@@ -110,9 +110,7 @@ impl ChessClock {
     fn check_triggers(&mut self) {
         for trigger in &self.settings.triggers {
             let should_fire = match trigger.trigger_type {
-                TriggerType::TotalMoves => {
-                    self.total_moves as f32 >= trigger.threshold
-                }
+                TriggerType::TotalMoves => self.total_moves as f32 >= trigger.threshold,
                 TriggerType::TotalActionPoints => {
                     self.total_action_points as f32 >= trigger.threshold
                 }

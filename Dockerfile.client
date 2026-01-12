@@ -1,0 +1,36 @@
+# Multi-stage build for ChessMate CLI client
+
+# Build stage
+FROM rust:1.75 as builder
+
+WORKDIR /app
+
+# Copy manifests
+COPY Cargo.toml Cargo.lock ./
+
+# Copy source code (minimal needed for client)
+COPY src ./src
+
+# Build client for release
+RUN cargo build --bin client --release
+
+# Runtime stage
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy the binary from builder
+COPY --from=builder /app/target/release/client /usr/local/bin/client
+
+# Set default environment variables
+ENV SERVER_URL=ws://server:3000/ws
+ENV PLAYER_ID=player_default
+
+# Run the client
+CMD ["sh", "-c", "client $PLAYER_ID"]

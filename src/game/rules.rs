@@ -1,6 +1,6 @@
 use super::board::{Board, GameStatus};
 use super::moves::generate_pseudo_legal_moves;
-use super::piece::{Color, PieceType, Position, Move};
+use super::piece::{Color, Move, PieceType, Position};
 use std::collections::HashMap;
 
 /// Check if a square is under attack by the given color
@@ -135,12 +135,17 @@ pub fn has_insufficient_material(board: &Board) -> bool {
         for col in 0..8 {
             let pos = Position::new(row, col);
             if let Some(piece) = board.get_piece(pos) {
-                *piece_counts.entry((piece.color, piece.piece_type)).or_insert(0) += 1;
+                *piece_counts
+                    .entry((piece.color, piece.piece_type))
+                    .or_insert(0) += 1;
 
                 // Track square color for bishops (white squares have even row+col sum)
                 if piece.piece_type == PieceType::Bishop {
                     let is_white_square = (row + col) % 2 == 0;
-                    bishop_colors.entry(piece.color).or_insert_with(Vec::new).push(is_white_square);
+                    bishop_colors
+                        .entry(piece.color)
+                        .or_insert_with(Vec::new)
+                        .push(is_white_square);
                 }
             }
         }
@@ -160,21 +165,35 @@ pub fn has_insufficient_material(board: &Board) -> bool {
 
     // King + Bishop vs King or King + Knight vs King
     if total_pieces == 1 {
-        return piece_counts.get(&(Color::White, PieceType::Bishop)).is_some()
-            || piece_counts.get(&(Color::Black, PieceType::Bishop)).is_some()
-            || piece_counts.get(&(Color::White, PieceType::Knight)).is_some()
-            || piece_counts.get(&(Color::Black, PieceType::Knight)).is_some();
+        return piece_counts
+            .get(&(Color::White, PieceType::Bishop))
+            .is_some()
+            || piece_counts
+                .get(&(Color::Black, PieceType::Bishop))
+                .is_some()
+            || piece_counts
+                .get(&(Color::White, PieceType::Knight))
+                .is_some()
+            || piece_counts
+                .get(&(Color::Black, PieceType::Knight))
+                .is_some();
     }
 
     // King + Bishop vs King + Bishop (same color squares)
     if total_pieces == 2 {
-        let white_bishops = piece_counts.get(&(Color::White, PieceType::Bishop)).unwrap_or(&0);
-        let black_bishops = piece_counts.get(&(Color::Black, PieceType::Bishop)).unwrap_or(&0);
+        let white_bishops = piece_counts
+            .get(&(Color::White, PieceType::Bishop))
+            .unwrap_or(&0);
+        let black_bishops = piece_counts
+            .get(&(Color::Black, PieceType::Bishop))
+            .unwrap_or(&0);
 
         if *white_bishops == 1 && *black_bishops == 1 {
             // Check if bishops are on same color squares
-            if let (Some(white_squares), Some(black_squares)) =
-                (bishop_colors.get(&Color::White), bishop_colors.get(&Color::Black)) {
+            if let (Some(white_squares), Some(black_squares)) = (
+                bishop_colors.get(&Color::White),
+                bishop_colors.get(&Color::Black),
+            ) {
                 if white_squares[0] == black_squares[0] {
                     return true;
                 }

@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:15-alpine
+    container_name: chessmate-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chessmate
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChessMate game server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chessmate-server
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/chessmate
+      RUST_LOG: info
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Test client 1 (optional - for local testing)
+  client1:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: chessmate-client1
+    environment:
+      SERVER_URL: ws://server:3000/ws
+      PLAYER_ID: player1
+    depends_on:
+      - server
+    profiles:
+      - testing
+    stdin_open: true
+    tty: true
+
+  # Test client 2 (optional - for local testing)
+  client2:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: chessmate-client2
+    environment:
+      SERVER_URL: ws://server:3000/ws
+      PLAYER_ID: player2
+    depends_on:
+      - server
+    profiles:
+      - testing
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: chessmate-network

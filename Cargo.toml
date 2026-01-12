@@ -19,17 +19,33 @@ godot = ["dep:godot"]
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
 rand = "0.8"
 
-# Server dependencies (only used by binary)
-axum = "0.7"
-tokio = { version = "1", features = ["full"] }
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "migrate", "chrono"] }
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Async runtime and networking
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+
+# Web frameworks
+warp = "0.3"  # Used in websocket.rs module
+axum = { version = "0.7", features = ["ws"] }  # Used in server binary
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "trace"] }
-chrono = { version = "0.4", features = ["serde"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "runtime-tokio", "postgres", "macros", "migrate", "chrono"] }
+
+# Logging
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = "0.3"
+
+# UUID generation for game IDs
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Server dependencies (only used by binary)
+chrono = { version = "0.4", features = ["serde"] }
 
 [profile.dev]
 opt-level = 1

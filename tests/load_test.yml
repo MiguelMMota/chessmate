@@ -1,0 +1,152 @@
+# Artillery Load Testing Configuration for ChessMate Server
+#
+# This configuration tests the server's ability to handle multiple concurrent
+# WebSocket connections and game sessions.
+#
+# Install Artillery: npm install -g artillery
+# Run: artillery run tests/load_test.yml
+
+config:
+  target: "ws://localhost:3000"
+  phases:
+    # Warm-up phase: Slowly ramp up connections
+    - duration: 30
+      arrivalRate: 2
+      name: "Warm-up"
+
+    # Load phase: Sustained load
+    - duration: 60
+      arrivalRate: 10
+      name: "Sustained load"
+
+    # Spike phase: Test handling of traffic spikes
+    - duration: 30
+      arrivalRate: 25
+      name: "Traffic spike"
+
+    # Cool-down phase: Gradual decrease
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool-down"
+
+  # WebSocket engine configuration
+  engines:
+    ws:
+      # Think time between actions (milliseconds)
+      defaults:
+        think: 1000
+
+  # Performance thresholds
+  ensure:
+    maxErrorRate: 1  # Max 1% error rate
+    p99: 500  # 99th percentile response time < 500ms
+    p95: 200  # 95th percentile response time < 200ms
+
+  # Plugins for enhanced reporting
+  plugins:
+    expect: {}
+
+scenarios:
+  # Scenario 1: Players join matchmaking and play games
+  - name: "Matchmaking and gameplay"
+    engine: ws
+    flow:
+      # Connect to WebSocket
+      - ws:
+          url: "/ws"
+
+      # Join matchmaking with unique player ID
+      - send:
+          payload: |
+            {
+              "type": "JoinMatchmaking",
+              "player_id": "player_{{ $randomString() }}"
+            }
+
+      # Wait for match found message
+      - think: 2
+
+      # If matched, make a few moves
+      - loop:
+          - think: 1
+          - send:
+              payload: |
+                {
+                  "type": "SubmitAction",
+                  "game_id": "{{ $context.vars.game_id }}",
+                  "action": {
+                    "action_type": "MovePiece",
+                    "from": {"row": 6, "col": 4},
+                    "to": {"row": 4, "col": 4},
+                    "promotion": null
+                  }
+                }
+        count: 3
+
+      # Disconnect
+      - ws:
+          close: true
+
+  # Scenario 2: Connection stress test
+  - name: "Connect and disconnect"
+    engine: ws
+    weight: 30  # 30% of virtual users run this scenario
+    flow:
+      # Connect
+      - ws:
+          url: "/ws"
+
+      # Send join message
+      - send:
+          payload: |
+            {
+              "type": "JoinMatchmaking",
+              "player_id": "stress_{{ $randomString() }}"
+            }
+
+      # Hold connection briefly
+      - think: 3
+
+      # Disconnect
+      - ws:
+          close: true
+
+  # Scenario 3: Rapid reconnections
+  - name: "Reconnection test"
+    engine: ws
+    weight: 20  # 20% of virtual users run this scenario
+    flow:
+      - loop:
+          # Connect
+          - ws:
+              url: "/ws"
+
+          # Join
+          - send:
+              payload: |
+                {
+                  "type": "JoinMatchmaking",
+                  "player_id": "reconnect_{{ $randomNumber(0, 1000) }}"
+                }
+
+          # Quick disconnect
+          - think: 0.5
+          - ws:
+              close: true
+
+          # Wait before reconnecting
+          - think: 1
+        count: 5
+
+# Custom metrics to track
+# These will appear in the Artillery report
+metrics:
+  # Track game-specific events
+  - name: "Matches created"
+    expression: "count(MatchFound)"
+
+  - name: "Invalid moves"
+    expression: "count(InvalidAction)"
+
+  - name: "Games completed"
+    expression: "count(GameOver)"

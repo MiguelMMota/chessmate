@@ -1,10 +1,10 @@
 // Godot-specific bridge - wraps the pure Rust game logic for Godot
 // This is the ONLY file that should have Godot dependencies
 
-use godot::prelude::*;
-use crate::game::game_state::ChessGame as RustChessGame;
 use crate::game::board::GameStatus;
+use crate::game::game_state::ChessGame as RustChessGame;
 use crate::game::piece::{Color, PieceType};
+use godot::prelude::*;
 
 // Main extension struct for Godot
 struct ChessMateExtension;
@@ -43,7 +43,8 @@ impl ChessGame {
     /// Reset the game with a chess clock
     #[func]
     pub fn reset_game_with_clock(&mut self, initial_time_seconds: i32, increment_seconds: i32) {
-        self.game.reset_game_with_clock(initial_time_seconds, increment_seconds);
+        self.game
+            .reset_game_with_clock(initial_time_seconds, increment_seconds);
     }
 
     /// Get the piece at a position
@@ -97,7 +98,12 @@ impl ChessGame {
 
     /// Try to move the selected piece to the given position with a specific promotion piece
     #[func]
-    pub fn try_move_selected_with_promotion(&mut self, row: i32, col: i32, piece_type: GString) -> bool {
+    pub fn try_move_selected_with_promotion(
+        &mut self,
+        row: i32,
+        col: i32,
+        piece_type: GString,
+    ) -> bool {
         let promotion_piece = match piece_type.to_string().to_lowercase().as_str() {
             "queen" => PieceType::Queen,
             "rook" => PieceType::Rook,
@@ -105,7 +111,8 @@ impl ChessGame {
             "knight" => PieceType::Knight,
             _ => return false,
         };
-        self.game.try_move_selected_with_promotion(row as i8, col as i8, promotion_piece)
+        self.game
+            .try_move_selected_with_promotion(row as i8, col as i8, promotion_piece)
     }
 
     /// Try to move the selected piece to the given position
