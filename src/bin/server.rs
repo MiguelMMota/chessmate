@@ -147,7 +147,9 @@ async fn init_database(database_url: &str) -> Result<PgPool, sqlx::Error> {
         .await?;
 
     // Run migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await?;
 
     Ok(pool)
 }
