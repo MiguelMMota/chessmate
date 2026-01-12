@@ -6,6 +6,11 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# Server binary
+[[bin]]
+name = "chessmate-server"
+path = "src/bin/server.rs"
+
 [features]
 default = ["godot"]
 godot = ["dep:godot"]
@@ -26,10 +31,11 @@ futures-util = "0.3"
 # Web frameworks
 warp = "0.3"  # Used in websocket.rs module
 axum = { version = "0.7", features = ["ws"] }  # Used in server binary
-tower-http = { version = "0.5", features = ["cors"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
 
 # Database
-sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "macros", "migrate"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "runtime-tokio", "postgres", "macros", "migrate", "chrono"] }
 
 # Logging
 tracing = "0.1"
@@ -37,6 +43,9 @@ tracing-subscriber = "0.3"
 
 # UUID generation for game IDs
 uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Server dependencies (only used by binary)
+chrono = { version = "0.4", features = ["serde"] }
 
 [profile.dev]
 opt-level = 1

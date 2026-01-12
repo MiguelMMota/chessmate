@@ -2,6 +2,7 @@
 .claude/
 CLAUDE.md
 TODO
+DEVELOPMENT.md
 
 # Auxiliary scripts, useful for Claude Code workflow
 scripts/
@@ -9,6 +10,9 @@ scripts/
 # Rust build artifacts
 /target
 Cargo.lock
+
+# Environment files (contain secrets)
+.env
 
 # Godot project files
 godot/.godot/
