@@ -1,7 +1,7 @@
 // Pure Rust game logic modules - NO Godot dependencies
 pub mod game;
 pub mod ai;
-mod networking;
+pub mod networking;  // Public for server binary
 mod cards;
 
 // FFI layer for external clients (Godot, web, etc.)

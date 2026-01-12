@@ -97,6 +97,7 @@ impl ServerGame {
 }
 
 /// Main game server managing all games and matchmaking
+#[derive(Clone)]
 pub struct GameServer {
     active_games: Arc<RwLock<HashMap<String, ServerGame>>>,
     matchmaking: Arc<RwLock<MatchmakingQueue>>,
