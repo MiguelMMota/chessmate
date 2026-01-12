@@ -16,8 +16,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|| format!("player_{}", rand::random::<u16>()));
 
     // Get server URL from environment or use default
-    let server_url = std::env::var("SERVER_URL")
-        .unwrap_or_else(|_| "ws://localhost:3000/ws".to_string());
+    let server_url =
+        std::env::var("SERVER_URL").unwrap_or_else(|_| "ws://localhost:3000/ws".to_string());
 
     println!("Player ID: {}", player_id);
     println!("Server: {}\n", server_url);

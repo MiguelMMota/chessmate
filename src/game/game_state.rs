@@ -1,7 +1,7 @@
 use super::board::{Board, GameStatus};
-use super::piece::{Position, Move, PieceType, Color};
-use super::rules::{generate_legal_moves, get_game_status};
 use super::chess_clock::ChessClockSettings;
+use super::piece::{Color, Move, PieceType, Position};
+use super::rules::{generate_legal_moves, get_game_status};
 use crate::ai::simple_opponent::select_weighted_move;
 use std::collections::HashMap;
 
@@ -115,7 +115,12 @@ impl ChessGame {
 
     /// Try to move the selected piece to the given position with a specific promotion piece
     /// Returns true if the move was successful, false otherwise
-    pub fn try_move_selected_with_promotion(&mut self, row: i8, col: i8, promotion_piece: PieceType) -> bool {
+    pub fn try_move_selected_with_promotion(
+        &mut self,
+        row: i8,
+        col: i8,
+        promotion_piece: PieceType,
+    ) -> bool {
         let to = Position::new(row, col);
 
         if let Some(from) = self.selected_position {

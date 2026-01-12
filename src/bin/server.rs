@@ -44,10 +44,7 @@ async fn stats(State(state): State<AppState>) -> axum::Json<serde_json::Value> {
 }
 
 // WebSocket handler
-async fn websocket_handler(
-    ws: WebSocketUpgrade,
-    State(state): State<AppState>,
-) -> Response {
+async fn websocket_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> Response {
     ws.on_upgrade(|socket| handle_websocket(socket, state.game_server))
 }
 
@@ -85,16 +82,18 @@ async fn handle_websocket(socket: axum::extract::ws::WebSocket, server: GameServ
                         Ok(client_msg) => {
                             // Extract player_id from the message if we don't have it yet
                             if player_id.is_none() {
-                                if let ClientMessage::JoinMatchmaking {
-                                    player_id: ref pid,
-                                } = client_msg
+                                if let ClientMessage::JoinMatchmaking { player_id: ref pid } =
+                                    client_msg
                                 {
                                     player_id = Some(pid.clone());
 
                                     // Add player to matchmaking queue
                                     let player = WaitingPlayer::new(pid.clone(), tx.clone());
                                     if let Err(e) = server.add_to_matchmaking(player).await {
-                                        tracing::error!("Failed to add player to matchmaking: {}", e);
+                                        tracing::error!(
+                                            "Failed to add player to matchmaking: {}",
+                                            e
+                                        );
                                         let _ = tx.send(ServerMessage::error(e));
                                         continue;
                                     }

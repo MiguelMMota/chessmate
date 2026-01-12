@@ -133,8 +133,7 @@ impl GameServer {
                 self.handle_join_matchmaking(player_id).await
             }
             ClientMessage::SubmitAction { game_id, action } => {
-                self.handle_submit_action(player_id, &game_id, action)
-                    .await
+                self.handle_submit_action(player_id, &game_id, action).await
             }
             ClientMessage::LeaveGame { game_id } => {
                 self.handle_leave_game(player_id, &game_id).await
@@ -153,10 +152,7 @@ impl GameServer {
     }
 
     /// Add a player to the matchmaking queue (called from WebSocket handler)
-    pub async fn add_to_matchmaking(
-        &self,
-        player: WaitingPlayer,
-    ) -> Result<(), String> {
+    pub async fn add_to_matchmaking(&self, player: WaitingPlayer) -> Result<(), String> {
         let mut queue = self.matchmaking.write().await;
         queue.add_player(player);
         Ok(())
@@ -232,8 +228,13 @@ impl GameServer {
 
         // Process the action
         match action {
-            GameAction::MovePiece { from, to, promotion } => {
-                self.process_move(game, player_id, from, to, promotion).await
+            GameAction::MovePiece {
+                from,
+                to,
+                promotion,
+            } => {
+                self.process_move(game, player_id, from, to, promotion)
+                    .await
             }
             GameAction::Resign => self.process_resign(game, player_id).await,
             GameAction::OfferDraw | GameAction::AcceptDraw | GameAction::DeclineDraw => {
@@ -257,7 +258,8 @@ impl GameServer {
 
         // Try to move (with or without promotion)
         let success = if let Some(promo) = promotion {
-            game.game.try_move_selected_with_promotion(to.row, to.col, promo)
+            game.game
+                .try_move_selected_with_promotion(to.row, to.col, promo)
         } else {
             game.game.try_move_selected(to.row, to.col)
         };
@@ -288,12 +290,8 @@ impl GameServer {
             let (winner, reason) = match status {
                 GameStatus::Checkmate(color) => (Some(color), "Checkmate".to_string()),
                 GameStatus::Stalemate => (None, "Stalemate".to_string()),
-                GameStatus::DrawInsufficientMaterial => {
-                    (None, "Insufficient material".to_string())
-                }
-                GameStatus::TimeLoss(color) => {
-                    (Some(color.opposite()), "Time out".to_string())
-                }
+                GameStatus::DrawInsufficientMaterial => (None, "Insufficient material".to_string()),
+                GameStatus::TimeLoss(color) => (Some(color.opposite()), "Time out".to_string()),
                 _ => (None, "Game over".to_string()),
             };
 

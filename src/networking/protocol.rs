@@ -11,10 +11,7 @@ pub enum ClientMessage {
     JoinMatchmaking { player_id: String },
 
     /// Submit a game action (move, resign, etc.)
-    SubmitAction {
-        game_id: String,
-        action: GameAction,
-    },
+    SubmitAction { game_id: String, action: GameAction },
 
     /// Leave a game
     LeaveGame { game_id: String },

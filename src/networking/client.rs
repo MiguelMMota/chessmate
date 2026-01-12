@@ -186,13 +186,19 @@ impl SimpleGameClient {
                 }
                 ServerMessage::GameStateUpdate { state } => {
                     self.current_state = Some(state.clone());
-                    events.push(format!("Game state updated. Turn: {:?}", state.current_turn));
+                    events.push(format!(
+                        "Game state updated. Turn: {:?}",
+                        state.current_turn
+                    ));
                 }
                 ServerMessage::OpponentAction { action } => {
                     events.push(format!("Opponent action: {:?}", action));
                 }
                 ServerMessage::GameOver { winner, reason } => {
-                    events.push(format!("Game over! Winner: {:?}, Reason: {}", winner, reason));
+                    events.push(format!(
+                        "Game over! Winner: {:?}, Reason: {}",
+                        winner, reason
+                    ));
                     self.current_game_id = None;
                     self.current_state = None;
                 }

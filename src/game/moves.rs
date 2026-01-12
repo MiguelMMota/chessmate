@@ -1,5 +1,5 @@
 use super::board::Board;
-use super::piece::{Color, PieceType, Position, Move};
+use super::piece::{Color, Move, PieceType, Position};
 
 /// Generates all pseudo-legal moves for a piece at the given position
 /// Pseudo-legal means the moves follow piece movement rules but may leave the king in check
@@ -30,7 +30,12 @@ fn generate_pawn_moves(board: &Board, from: Position, color: Color) -> Vec<Move>
     if one_forward.is_valid() && board.get_piece(one_forward).is_none() {
         if one_forward.row == promotion_row {
             // Add all promotion options
-            for promotion_type in [PieceType::Queen, PieceType::Rook, PieceType::Bishop, PieceType::Knight] {
+            for promotion_type in [
+                PieceType::Queen,
+                PieceType::Rook,
+                PieceType::Bishop,
+                PieceType::Knight,
+            ] {
                 moves.push(Move::with_promotion(from, one_forward, promotion_type));
             }
         } else {
@@ -63,7 +68,12 @@ fn generate_pawn_moves(board: &Board, from: Position, color: Color) -> Vec<Move>
         if can_capture {
             if capture_pos.row == promotion_row {
                 // Capture with promotion
-                for promotion_type in [PieceType::Queen, PieceType::Rook, PieceType::Bishop, PieceType::Knight] {
+                for promotion_type in [
+                    PieceType::Queen,
+                    PieceType::Rook,
+                    PieceType::Bishop,
+                    PieceType::Knight,
+                ] {
                     moves.push(Move::with_promotion(from, capture_pos, promotion_type));
                 }
             } else {
@@ -78,8 +88,14 @@ fn generate_pawn_moves(board: &Board, from: Position, color: Color) -> Vec<Move>
 fn generate_knight_moves(board: &Board, from: Position, color: Color) -> Vec<Move> {
     let mut moves = Vec::new();
     let knight_offsets = [
-        (-2, -1), (-2, 1), (-1, -2), (-1, 2),
-        (1, -2), (1, 2), (2, -1), (2, 1),
+        (-2, -1),
+        (-2, 1),
+        (-1, -2),
+        (-1, 2),
+        (1, -2),
+        (1, 2),
+        (2, -1),
+        (2, 1),
     ];
 
     for (row_offset, col_offset) in knight_offsets {
@@ -112,9 +128,14 @@ fn generate_rook_moves(board: &Board, from: Position, color: Color) -> Vec<Move>
 
 fn generate_queen_moves(board: &Board, from: Position, color: Color) -> Vec<Move> {
     let directions = [
-        (-1, -1), (-1, 0), (-1, 1),
-        (0, -1),           (0, 1),
-        (1, -1),  (1, 0),  (1, 1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
     ];
     generate_sliding_moves(board, from, color, &directions)
 }
@@ -154,9 +175,14 @@ fn generate_sliding_moves(
 fn generate_king_moves(board: &Board, from: Position, color: Color) -> Vec<Move> {
     let mut moves = Vec::new();
     let king_offsets = [
-        (-1, -1), (-1, 0), (-1, 1),
-        (0, -1),           (0, 1),
-        (1, -1),  (1, 0),  (1, 1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
     ];
 
     // Normal king moves

@@ -10,9 +10,9 @@ pub struct SerializableGameState {
     pub game_id: String,
     pub current_turn: Color,
     pub status: GameStatus,
-    pub white_time: Option<i32>,  // None if no clock
-    pub black_time: Option<i32>,  // None if no clock
-    pub board_state: Vec<Vec<Option<Piece>>>,  // 8x8 board
+    pub white_time: Option<i32>,              // None if no clock
+    pub black_time: Option<i32>,              // None if no clock
+    pub board_state: Vec<Vec<Option<Piece>>>, // 8x8 board
 }
 
 impl SerializableGameState {

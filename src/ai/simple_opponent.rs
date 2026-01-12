@@ -36,7 +36,8 @@ fn calculate_move_weight(board: &Board, mv: &Move) -> f64 {
     // Check for en passant capture
     if moving_piece.piece_type == PieceType::Pawn
         && mv.from.col != mv.to.col
-        && board.get_piece(mv.to).is_none() {
+        && board.get_piece(mv.to).is_none()
+    {
         // En passant - equivalent to pawn capture
         weight += 2.0 * 2.0; // 4.0
     }
@@ -116,7 +117,10 @@ mod tests {
         let board = Board::new();
         let selected_move = select_weighted_move(&board);
 
-        assert!(selected_move.is_some(), "Should be able to select a move from initial position");
+        assert!(
+            selected_move.is_some(),
+            "Should be able to select a move from initial position"
+        );
     }
 
     #[test]

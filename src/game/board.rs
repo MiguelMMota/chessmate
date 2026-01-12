@@ -1,5 +1,5 @@
-use super::piece::{Color, Piece, PieceType, Position, Move};
 use super::chess_clock::{ChessClock, ChessClockSettings};
+use super::piece::{Color, Move, Piece, PieceType, Position};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,7 +40,7 @@ pub struct Board {
     halfmove_clock: u32,
     fullmove_number: u32,
     chess_clock: Option<ChessClock>,
-    move_history: Vec<Move>,  // Track all moves for replay/undo
+    move_history: Vec<Move>, // Track all moves for replay/undo
 }
 
 impl Board {

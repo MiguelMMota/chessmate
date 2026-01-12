@@ -24,7 +24,7 @@ impl WaitingPlayer {
 }
 
 /// A matched pair of players ready to start a game
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Match {
     pub game_id: String,
     pub white_player: WaitingPlayer,
