@@ -11,6 +11,9 @@ scripts/
 /target
 Cargo.lock
 
+# Environment files (contain secrets)
+.env
+
 # Godot project files
 godot/.godot/
 godot/.import/

@@ -6,6 +6,11 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# Server binary
+[[bin]]
+name = "chessmate-server"
+path = "src/bin/server.rs"
+
 [features]
 default = ["godot"]
 godot = ["dep:godot"]
@@ -13,6 +18,18 @@ godot = ["dep:godot"]
 [dependencies]
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
 rand = "0.8"
+
+# Server dependencies (only used by binary)
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "migrate", "chrono"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [profile.dev]
 opt-level = 1
