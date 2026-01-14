@@ -481,12 +481,17 @@ func _gui_input(event):
 	# Check if game is over
 	if chess_game.is_game_over():
 		return
-
-	# In online mode, check if it's our turn
+    
+  # In online mode, check if it's our turn
 	if is_online_mode:
 		var current_turn = chess_game.get_current_turn()
 		if current_turn != my_color:
 			return  # Not our turn
+
+	# Handle right-click to cancel selection/dragging
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		cancel_selection()
+		return
 
 	# Handle mouse button press (start drag or click)
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -571,6 +576,19 @@ func handle_piece_drop(row: int, col: int):
 			selected_square = Vector2i(-1, -1)
 			legal_moves.clear()
 			update_board()  # Restore visual state after invalid move
+
+func cancel_selection():
+	DebugUtils.debug("Cancelling selection/drag")
+
+	if is_dragging:
+		is_dragging = false
+		drag_start_square = Vector2i(-1, -1)
+
+	chess_game.deselect_piece()
+	selected_square = Vector2i(-1, -1)
+	legal_moves.clear()
+
+	update_board()
 
 func handle_square_click(row: int, col: int):
 	DebugUtils.debug_vars({"handle_square_click row": row, "col": col})
