@@ -67,11 +67,14 @@ impl ServerGame {
 
         SerializableGameState::new(
             self.game_id.clone(),
+            self.white_player_id.clone(),
+            self.black_player_id.clone(),
             board.current_turn(),
             status,
             board.get_remaining_time(Color::White),
             board.get_remaining_time(Color::Black),
-            SerializableGameState::board_to_vec(&self.game.board_squares()),
+            &self.game.board_squares(),
+            board.last_action(),
         )
     }
 

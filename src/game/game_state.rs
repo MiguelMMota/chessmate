@@ -69,6 +69,11 @@ impl ChessGame {
         self.board.current_turn()
     }
 
+    /// Set whose turn it is (for network synchronization)
+    pub fn set_current_turn(&mut self, color: Color) {
+        self.board.set_current_turn(color);
+    }
+
     /// Try to select a piece at the given position
     /// Returns true if a piece was selected, false otherwise
     pub fn select_piece(&mut self, row: i8, col: i8) -> bool {
@@ -169,6 +174,9 @@ impl ChessGame {
                     return true;
                 }
             }
+
+            // Move was invalid - clear selection
+            self.selected_position = None;
         }
 
         false
@@ -249,5 +257,36 @@ impl ChessGame {
             }
         }
         squares
+    }
+
+    /// Clear a square on the board (set to empty)
+    /// Used when syncing board state from server
+    pub fn clear_square(&mut self, row: i8, col: i8) {
+        let pos = Position::new(row, col);
+        self.board.clear_square(pos);
+    }
+
+    /// Clear the en passant target
+    /// Used when syncing board state from server
+    pub fn clear_en_passant_target(&mut self) {
+        self.board.clear_en_passant_target();
+    }
+
+    /// Place a piece on the board at the given position
+    /// Used when syncing board state from server
+    pub fn place_piece(&mut self, row: i8, col: i8, piece_type: PieceType, color: Color, id: u8) {
+        let pos = Position::new(row, col);
+        let piece = super::piece::Piece::new(piece_type, color, id);
+        self.board.set_piece(pos, Some(piece));
+    }
+
+    /// Set white's remaining time (for clock synchronization)
+    pub fn set_white_time(&mut self, seconds: i32) {
+        self.board.set_remaining_time(Color::White, seconds);
+    }
+
+    /// Set black's remaining time (for clock synchronization)
+    pub fn set_black_time(&mut self, seconds: i32) {
+        self.board.set_remaining_time(Color::Black, seconds);
     }
 }

@@ -74,6 +74,11 @@ impl ChessClock {
         self.remaining_times.get(&player_id).copied()
     }
 
+    /// Set remaining time for a player (used for network synchronization)
+    pub fn set_remaining_time(&mut self, player_id: usize, seconds: i32) {
+        self.remaining_times.insert(player_id, seconds);
+    }
+
     /// Decrement the active player's time by one second
     /// Returns true if the player still has time, false if time ran out
     pub fn tick(&mut self) -> bool {

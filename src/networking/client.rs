@@ -187,8 +187,8 @@ impl SimpleGameClient {
                 ServerMessage::GameStateUpdate { state } => {
                     self.current_state = Some(state.clone());
                     events.push(format!(
-                        "Game state updated. Turn: {:?}",
-                        state.current_turn
+                        "Game state updated. Next player: {}",
+                        state.next_player_id
                     ));
                 }
                 ServerMessage::OpponentAction { action } => {

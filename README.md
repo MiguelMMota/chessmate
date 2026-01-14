@@ -100,6 +100,18 @@ This architecture enables:
    cargo install gdext
    ```
 
+4. **tmux** (for multiplayer testing)
+   ```bash
+   # macOS
+   brew install tmux
+
+   # Linux (Ubuntu/Debian)
+   sudo apt-get install tmux
+
+   # Linux (Fedora)
+   sudo dnf install tmux
+   ```
+
 ### Initial Setup
 
 1. Clone the repository:
@@ -302,7 +314,29 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Quick Start: Local Testing
 
-Test multiplayer locally with server + 2 clients:
+**GUI Clients (Godot):**
+
+Test multiplayer with Docker server + N Godot clients:
+
+```bash
+# Launch with 2 GUI clients (default)
+./scripts/run_multiplayer.sh
+
+# Launch with 3 GUI clients
+./scripts/run_multiplayer.sh 3
+```
+
+This script automatically:
+- Starts Docker containers (server + database) in a tmux window
+- Launches N Godot GUI clients in separate tmux windows
+- Keeps all logs visible and attached
+- Handles cleanup on exit (Ctrl+C)
+
+**Navigation:** Use `Ctrl+b n` (next window), `Ctrl+b p` (previous window), or `Ctrl+b 0-9` (jump to window)
+
+**CLI Clients (for testing without GUI):**
+
+Test multiplayer locally with server + 2 CLI clients:
 
 ```bash
 ./scripts/run_local_dev.sh

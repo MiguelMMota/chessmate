@@ -1,7 +1,7 @@
 # Multi-stage build for ChessMate server
 
 # Build stage
-FROM rust:1.75 as builder
+FROM rust:1.86 as builder
 
 WORKDIR /app
 
@@ -12,8 +12,8 @@ COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY migrations ./migrations
 
-# Build for release
-RUN cargo build --bin server --release
+# Build for release (without Godot feature for headless server)
+RUN cargo build --bin chessmate-server --release --no-default-features
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -22,12 +22,13 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copy the binary from builder
-COPY --from=builder /app/target/release/server /usr/local/bin/server
+COPY --from=builder /app/target/release/chessmate-server /usr/local/bin/chessmate-server
 
 # Copy migrations for database setup
 COPY --from=builder /app/migrations ./migrations
@@ -44,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
 # Run the server
-CMD ["server"]
+CMD ["chessmate-server"]

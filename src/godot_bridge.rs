@@ -72,6 +72,17 @@ impl ChessGame {
         }
     }
 
+    /// Set whose turn it is (for network synchronization)
+    #[func]
+    pub fn set_current_turn(&mut self, color: GString) {
+        let turn_color = match color.to_string().to_lowercase().as_str() {
+            "white" => Color::White,
+            "black" => Color::Black,
+            _ => return,
+        };
+        self.game.set_current_turn(turn_color);
+    }
+
     /// Try to select a piece at the given position
     #[func]
     pub fn select_piece(&mut self, row: i32, col: i32) -> bool {
@@ -187,5 +198,59 @@ impl ChessGame {
     #[func]
     pub fn make_ai_move(&mut self) -> bool {
         self.game.make_ai_move()
+    }
+
+    /// Clear a square on the board (set to empty)
+    #[func]
+    pub fn clear_square(&mut self, row: i32, col: i32) {
+        self.game.clear_square(row as i8, col as i8);
+    }
+
+    /// Clear the en passant target
+    #[func]
+    pub fn clear_en_passant_target(&mut self) {
+        self.game.clear_en_passant_target();
+    }
+
+    /// Place a piece on the board at the given position
+    #[func]
+    pub fn place_piece(
+        &mut self,
+        row: i32,
+        col: i32,
+        piece_type: GString,
+        color: GString,
+        id: i32,
+    ) -> bool {
+        let ptype = match piece_type.to_string().to_lowercase().as_str() {
+            "king" => PieceType::King,
+            "queen" => PieceType::Queen,
+            "rook" => PieceType::Rook,
+            "bishop" => PieceType::Bishop,
+            "knight" => PieceType::Knight,
+            "pawn" => PieceType::Pawn,
+            _ => return false,
+        };
+
+        let pcolor = match color.to_string().to_lowercase().as_str() {
+            "white" => Color::White,
+            "black" => Color::Black,
+            _ => return false,
+        };
+
+        self.game.place_piece(row as i8, col as i8, ptype, pcolor, id as u8);
+        true
+    }
+
+    /// Set white's remaining time (for clock synchronization)
+    #[func]
+    pub fn set_white_time(&mut self, seconds: i32) {
+        self.game.set_white_time(seconds);
+    }
+
+    /// Set black's remaining time (for clock synchronization)
+    #[func]
+    pub fn set_black_time(&mut self, seconds: i32) {
+        self.game.set_black_time(seconds);
     }
 }

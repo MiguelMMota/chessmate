@@ -11,6 +11,11 @@ crate-type = ["cdylib", "rlib"]
 name = "chessmate-server"
 path = "src/bin/server.rs"
 
+# Client binary
+[[bin]]
+name = "chessmate-client"
+path = "src/bin/client.rs"
+
 [features]
 default = ["godot"]
 godot = ["dep:godot"]
@@ -46,6 +51,9 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 
 # Server dependencies (only used by binary)
 chrono = { version = "0.4", features = ["serde"] }
+
+# Pin home crate to version compatible with Rust 1.86
+home = "0.5.11"
 
 [profile.dev]
 opt-level = 1
