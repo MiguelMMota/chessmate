@@ -211,13 +211,14 @@ impl GameServer {
     ) -> Result<(), String> {
         let mut games = self.active_games.write().await;
 
-        let game = games
-            .get_mut(game_id)
-            .ok_or_else(|| "Game not found".to_string())?;
+        let game = games.get_mut(game_id).ok_or_else(|| {
+            // Send specific error to player
+            format!("Game not found: {}", game_id)
+        })?;
 
         // Verify it's the player's turn
         if !game.is_player_turn(player_id) {
-            let msg = ServerMessage::invalid_action("Not your turn".to_string());
+            let msg = ServerMessage::not_your_turn();
             if let Some(color) = game.get_player_color(player_id) {
                 let sender = if color == Color::White {
                     &game.white_sender
@@ -268,7 +269,7 @@ impl GameServer {
         };
 
         if !success {
-            let msg = ServerMessage::invalid_action("Illegal move".to_string());
+            let msg = ServerMessage::invalid_move(from, to);
             if let Some(color) = game.get_player_color(player_id) {
                 let sender = if color == Color::White {
                     &game.white_sender
@@ -354,13 +355,24 @@ impl GameServer {
     async fn handle_request_state(&self, player_id: &str, game_id: &str) -> Result<(), String> {
         let games = self.active_games.read().await;
 
-        let game = games
-            .get(game_id)
-            .ok_or_else(|| "Game not found".to_string())?;
+        let game = games.get(game_id).ok_or_else(|| {
+            format!("Game not found: {}", game_id)
+        })?;
 
         // Verify player is in this game
         if player_id != game.white_player_id && player_id != game.black_player_id {
-            return Err("Not your game".to_string());
+            let sender = if let Some(color) = game.get_player_color(player_id) {
+                if color == Color::White {
+                    &game.white_sender
+                } else {
+                    &game.black_sender
+                }
+            } else {
+                // Player not in game at all, can't send error
+                return Err(format!("Not your game: {}", game_id));
+            };
+            let _ = sender.send(ServerMessage::not_your_game(game_id.to_string()));
+            return Err(format!("Not your game: {}", game_id));
         }
 
         // Send current state
