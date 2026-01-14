@@ -336,6 +336,11 @@ func _gui_input(event):
 	if chess_game.is_game_over():
 		return
 
+	# Handle right-click to cancel selection/dragging
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		cancel_selection()
+		return
+
 	# Handle mouse button press (start drag or click)
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		var local_pos = event.position - Vector2(20, 60)
@@ -402,6 +407,23 @@ func handle_piece_drop(row: int, col: int):
 		chess_game.deselect_piece()
 		selected_square = Vector2i(-1, -1)
 		legal_moves.clear()
+
+func cancel_selection():
+	DebugUtils.debug("Cancelling selection/drag")
+
+	# Stop dragging if active
+	if is_dragging:
+		is_dragging = false
+		drag_start_square = Vector2i(-1, -1)
+
+	# Deselect piece
+	chess_game.deselect_piece()
+	selected_square = Vector2i(-1, -1)
+	legal_moves.clear()
+
+	# Update display
+	update_board()
+	queue_redraw()
 
 func handle_square_click(row: int, col: int):
 	DebugUtils.debug_vars({"handle_square_click row": row, "col": col})
