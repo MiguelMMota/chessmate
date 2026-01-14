@@ -1,5 +1,58 @@
 use serde::{Deserialize, Serialize};
 
+/// Represents an action that occurred on the board
+/// Used to communicate what happened to clients for animation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum GameAction {
+    /// Simple move without capture
+    Move {
+        piece_id: u8,
+        from: Position,
+        to: Position,
+    },
+    /// Move that captures an opponent piece
+    Capture {
+        attacker_id: u8,
+        victim_id: u8,
+        from: Position,
+        to: Position,
+    },
+    /// Castling move
+    Castle {
+        king_id: u8,
+        rook_id: u8,
+        king_from: Position,
+        king_to: Position,
+        rook_from: Position,
+        rook_to: Position,
+        side: CastleSide,
+    },
+    /// En passant capture
+    EnPassant {
+        pawn_id: u8,
+        captured_pawn_id: u8,
+        from: Position,
+        to: Position,
+        captured_pawn_pos: Position,
+    },
+    /// Pawn promotion (may include capture)
+    /// The pawn is destroyed and a new piece is created
+    Promotion {
+        old_pawn_id: u8,
+        new_piece_id: u8,
+        from: Position,
+        to: Position,
+        new_piece_type: PieceType,
+        captured_piece_id: Option<u8>, // Some if promotion captures
+    },
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum CastleSide {
+    Kingside,
+    Queenside,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PieceType {
     Pawn,
@@ -29,11 +82,16 @@ impl Color {
 pub struct Piece {
     pub piece_type: PieceType,
     pub color: Color,
+    pub id: u8, // Unique ID: 0-15 for White, 16-31 for Black
 }
 
 impl Piece {
-    pub fn new(piece_type: PieceType, color: Color) -> Self {
-        Self { piece_type, color }
+    pub fn new(piece_type: PieceType, color: Color, id: u8) -> Self {
+        Self {
+            piece_type,
+            color,
+            id,
+        }
     }
 
     /// Returns the Unicode chess symbol for this piece (filled style for both colors)

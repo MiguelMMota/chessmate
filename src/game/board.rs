@@ -1,5 +1,5 @@
 use super::chess_clock::{ChessClock, ChessClockSettings};
-use super::piece::{Color, Move, Piece, PieceType, Position};
+use super::piece::{CastleSide, Color, GameAction, Move, Piece, PieceType, Position};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,7 +40,9 @@ pub struct Board {
     halfmove_clock: u32,
     fullmove_number: u32,
     chess_clock: Option<ChessClock>,
-    move_history: Vec<Move>, // Track all moves for replay/undo
+    move_history: Vec<Move>,        // Track all moves for replay/undo
+    last_action: Option<GameAction>, // Track the last action for client animation
+    next_piece_id: u8,               // Counter for creating new pieces (starts at 32)
 }
 
 impl Board {
@@ -58,6 +60,8 @@ impl Board {
             fullmove_number: 1,
             chess_clock: clock_settings.map(ChessClock::new),
             move_history: Vec::new(),
+            last_action: None,
+            next_piece_id: 32, // Start after the 32 initial pieces (0-31)
         };
         board.setup_initial_position();
 
@@ -73,31 +77,37 @@ impl Board {
         // Clear the board
         self.squares = [[None; 8]; 8];
 
-        // Setup pawns
+        // Setup white pawns (IDs 0-7)
         for col in 0..8 {
-            self.squares[1][col] = Some(Piece::new(PieceType::Pawn, Color::White));
-            self.squares[6][col] = Some(Piece::new(PieceType::Pawn, Color::Black));
+            let id = col as u8;
+            self.squares[1][col] = Some(Piece::new(PieceType::Pawn, Color::White, id));
         }
 
-        // Setup white pieces
-        self.squares[0][0] = Some(Piece::new(PieceType::Rook, Color::White));
-        self.squares[0][1] = Some(Piece::new(PieceType::Knight, Color::White));
-        self.squares[0][2] = Some(Piece::new(PieceType::Bishop, Color::White));
-        self.squares[0][3] = Some(Piece::new(PieceType::Queen, Color::White));
-        self.squares[0][4] = Some(Piece::new(PieceType::King, Color::White));
-        self.squares[0][5] = Some(Piece::new(PieceType::Bishop, Color::White));
-        self.squares[0][6] = Some(Piece::new(PieceType::Knight, Color::White));
-        self.squares[0][7] = Some(Piece::new(PieceType::Rook, Color::White));
+        // Setup white pieces (IDs 8-15)
+        self.squares[0][0] = Some(Piece::new(PieceType::Rook, Color::White, 8));
+        self.squares[0][1] = Some(Piece::new(PieceType::Knight, Color::White, 9));
+        self.squares[0][2] = Some(Piece::new(PieceType::Bishop, Color::White, 10));
+        self.squares[0][3] = Some(Piece::new(PieceType::Queen, Color::White, 11));
+        self.squares[0][4] = Some(Piece::new(PieceType::King, Color::White, 12));
+        self.squares[0][5] = Some(Piece::new(PieceType::Bishop, Color::White, 13));
+        self.squares[0][6] = Some(Piece::new(PieceType::Knight, Color::White, 14));
+        self.squares[0][7] = Some(Piece::new(PieceType::Rook, Color::White, 15));
 
-        // Setup black pieces
-        self.squares[7][0] = Some(Piece::new(PieceType::Rook, Color::Black));
-        self.squares[7][1] = Some(Piece::new(PieceType::Knight, Color::Black));
-        self.squares[7][2] = Some(Piece::new(PieceType::Bishop, Color::Black));
-        self.squares[7][3] = Some(Piece::new(PieceType::Queen, Color::Black));
-        self.squares[7][4] = Some(Piece::new(PieceType::King, Color::Black));
-        self.squares[7][5] = Some(Piece::new(PieceType::Bishop, Color::Black));
-        self.squares[7][6] = Some(Piece::new(PieceType::Knight, Color::Black));
-        self.squares[7][7] = Some(Piece::new(PieceType::Rook, Color::Black));
+        // Setup black pawns (IDs 16-23)
+        for col in 0..8 {
+            let id = 16 + col as u8;
+            self.squares[6][col] = Some(Piece::new(PieceType::Pawn, Color::Black, id));
+        }
+
+        // Setup black pieces (IDs 24-31)
+        self.squares[7][0] = Some(Piece::new(PieceType::Rook, Color::Black, 24));
+        self.squares[7][1] = Some(Piece::new(PieceType::Knight, Color::Black, 25));
+        self.squares[7][2] = Some(Piece::new(PieceType::Bishop, Color::Black, 26));
+        self.squares[7][3] = Some(Piece::new(PieceType::Queen, Color::Black, 27));
+        self.squares[7][4] = Some(Piece::new(PieceType::King, Color::Black, 28));
+        self.squares[7][5] = Some(Piece::new(PieceType::Bishop, Color::Black, 29));
+        self.squares[7][6] = Some(Piece::new(PieceType::Knight, Color::Black, 30));
+        self.squares[7][7] = Some(Piece::new(PieceType::Rook, Color::Black, 31));
 
         // Reset game state
         self.current_turn = Color::White;
@@ -124,6 +134,11 @@ impl Board {
         self.current_turn
     }
 
+    /// Set the current turn (for network synchronization)
+    pub fn set_current_turn(&mut self, color: Color) {
+        self.current_turn = color;
+    }
+
     /// Convert Color to player ID (White=0, Black=1)
     fn color_to_player_id(color: Color) -> usize {
         match color {
@@ -138,6 +153,10 @@ impl Board {
 
     pub fn en_passant_target(&self) -> Option<Position> {
         self.en_passant_target
+    }
+
+    pub fn clear_en_passant_target(&mut self) {
+        self.en_passant_target = None;
     }
 
     pub fn find_king(&self, color: Color) -> Option<Position> {
@@ -172,14 +191,31 @@ impl Board {
             && mv.from.col != mv.to.col
             && captured_piece.is_none();
 
+        // Capture information for GameAction before modifying board
+        let captured_pawn_info = if is_en_passant {
+            let captured_pawn_row = if piece.color == Color::White {
+                mv.to.row - 1
+            } else {
+                mv.to.row + 1
+            };
+            let captured_pawn_pos = Position::new(captured_pawn_row, mv.to.col);
+            self.get_piece(captured_pawn_pos).map(|p| (p.id, captured_pawn_pos))
+        } else {
+            None
+        };
+
+        let is_castling = piece.piece_type == PieceType::King && (mv.to.col - mv.from.col).abs() == 2;
+
         // Move the piece
         self.set_piece(mv.from, None);
 
-        // Handle promotion
-        let moving_piece = if let Some(promotion_type) = mv.promotion {
-            Piece::new(promotion_type, piece.color)
+        // Handle promotion (create new piece with new ID)
+        let (moving_piece, new_piece_id) = if let Some(promotion_type) = mv.promotion {
+            let new_id = self.next_piece_id;
+            self.next_piece_id += 1;
+            (Piece::new(promotion_type, piece.color, new_id), Some(new_id))
         } else {
-            piece
+            (piece, None)
         };
 
         self.set_piece(mv.to, Some(moving_piece));
@@ -195,19 +231,26 @@ impl Board {
         }
 
         // Handle castling
-        if piece.piece_type == PieceType::King && (mv.to.col - mv.from.col).abs() == 2 {
-            let (rook_from_col, rook_to_col) = if mv.to.col > mv.from.col {
+        let castling_rook_info = if is_castling {
+            let (rook_from_col, rook_to_col, castle_side) = if mv.to.col > mv.from.col {
                 // Kingside castling
-                (7, 5)
+                (7, 5, CastleSide::Kingside)
             } else {
                 // Queenside castling
-                (0, 3)
+                (0, 3, CastleSide::Queenside)
             };
             let rook_row = mv.from.row;
-            let rook = self.get_piece(Position::new(rook_row, rook_from_col));
-            self.set_piece(Position::new(rook_row, rook_from_col), None);
-            self.set_piece(Position::new(rook_row, rook_to_col), rook);
-        }
+            let rook_from_pos = Position::new(rook_row, rook_from_col);
+            let rook_to_pos = Position::new(rook_row, rook_to_col);
+            let rook = self.get_piece(rook_from_pos);
+            self.set_piece(rook_from_pos, None);
+            self.set_piece(rook_to_pos, rook);
+
+            // Capture rook info for GameAction
+            rook.map(|r| (r.id, rook_from_pos, rook_to_pos, castle_side))
+        } else {
+            None
+        };
 
         // Update en passant target
         self.en_passant_target = None;
@@ -266,6 +309,55 @@ impl Board {
 
         // Record move in history
         self.move_history.push(mv);
+
+        // Create GameAction for client animation
+        self.last_action = if let Some((rook_id, rook_from, rook_to, side)) = castling_rook_info {
+            // Castling
+            Some(GameAction::Castle {
+                king_id: piece.id,
+                rook_id,
+                king_from: mv.from,
+                king_to: mv.to,
+                rook_from,
+                rook_to,
+                side,
+            })
+        } else if let Some((captured_pawn_id, captured_pawn_pos)) = captured_pawn_info {
+            // En passant
+            Some(GameAction::EnPassant {
+                pawn_id: piece.id,
+                captured_pawn_id,
+                from: mv.from,
+                to: mv.to,
+                captured_pawn_pos,
+            })
+        } else if let Some(promotion_type) = mv.promotion {
+            // Promotion (may include capture)
+            // The pawn is destroyed and a new piece is created with new_piece_id
+            Some(GameAction::Promotion {
+                old_pawn_id: piece.id,
+                new_piece_id: new_piece_id.unwrap(), // Safe unwrap: if mv.promotion is Some, new_piece_id is Some
+                from: mv.from,
+                to: mv.to,
+                new_piece_type: promotion_type,
+                captured_piece_id: captured_piece.map(|p| p.id),
+            })
+        } else if let Some(victim) = captured_piece {
+            // Regular capture
+            Some(GameAction::Capture {
+                attacker_id: piece.id,
+                victim_id: victim.id,
+                from: mv.from,
+                to: mv.to,
+            })
+        } else {
+            // Simple move
+            Some(GameAction::Move {
+                piece_id: piece.id,
+                from: mv.from,
+                to: mv.to,
+            })
+        };
 
         true
     }
@@ -331,6 +423,19 @@ impl Board {
         self.chess_clock.is_some()
     }
 
+    /// Set remaining time for a player (used for network synchronization)
+    pub fn set_remaining_time(&mut self, color: Color, seconds: i32) {
+        if let Some(ref mut clock) = self.chess_clock {
+            let player_id = Self::color_to_player_id(color);
+            clock.set_remaining_time(player_id, seconds);
+        }
+    }
+
+    /// Clear a square on the board (set to empty)
+    pub fn clear_square(&mut self, pos: Position) {
+        self.set_piece(pos, None);
+    }
+
     /// Get the move history
     pub fn move_history(&self) -> &[Move] {
         &self.move_history
@@ -339,6 +444,11 @@ impl Board {
     /// Get the number of moves played
     pub fn move_count(&self) -> usize {
         self.move_history.len()
+    }
+
+    /// Get the last action performed
+    pub fn last_action(&self) -> Option<GameAction> {
+        self.last_action.clone()
     }
 }
 
