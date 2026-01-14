@@ -580,19 +580,15 @@ func handle_piece_drop(row: int, col: int):
 func cancel_selection():
 	DebugUtils.debug("Cancelling selection/drag")
 
-	# Stop dragging if active
 	if is_dragging:
 		is_dragging = false
 		drag_start_square = Vector2i(-1, -1)
 
-	# Deselect piece
 	chess_game.deselect_piece()
 	selected_square = Vector2i(-1, -1)
 	legal_moves.clear()
 
-	# Update display
 	update_board()
-	queue_redraw()
 
 func handle_square_click(row: int, col: int):
 	DebugUtils.debug_vars({"handle_square_click row": row, "col": col})
