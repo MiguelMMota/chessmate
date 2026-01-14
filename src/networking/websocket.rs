@@ -50,6 +50,7 @@ pub async fn handle_websocket(ws: WebSocket, server: GameServer) {
                                     let player = WaitingPlayer::new(pid.clone(), tx.clone());
                                     if let Err(e) = server.add_to_matchmaking(player).await {
                                         eprintln!("Failed to add player to matchmaking: {}", e);
+                                        // Use generic error for matchmaking failures
                                         let _ = tx.send(ServerMessage::error(e));
                                         continue;
                                     }
@@ -63,20 +64,21 @@ pub async fn handle_websocket(ws: WebSocket, server: GameServer) {
                             if let Some(ref pid) = player_id {
                                 if let Err(e) = server.handle_message(pid, client_msg).await {
                                     eprintln!("Error handling message from {}: {}", pid, e);
-                                    let _ = tx.send(ServerMessage::error(e));
+                                    // Check if error is specific and already sent by server
+                                    // Otherwise send as generic error
+                                    if e.contains("Game not found") {
+                                        // Specific error already sent by server
+                                    } else {
+                                        let _ = tx.send(ServerMessage::error(e));
+                                    }
                                 }
                             } else {
-                                let _ = tx.send(ServerMessage::error(
-                                    "Must join matchmaking first".to_string(),
-                                ));
+                                let _ = tx.send(ServerMessage::must_join_matchmaking());
                             }
                         }
                         Err(e) => {
                             eprintln!("Failed to deserialize message: {}", e);
-                            let _ = tx.send(ServerMessage::error(format!(
-                                "Invalid message format: {}",
-                                e
-                            )));
+                            let _ = tx.send(ServerMessage::invalid_message_format(e.to_string()));
                         }
                     }
                 }
