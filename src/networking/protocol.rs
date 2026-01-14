@@ -51,6 +51,24 @@ pub enum ServerMessage {
 
     /// Acknowledgment that player joined matchmaking queue
     MatchmakingJoined,
+
+    /// Specific error: Invalid move attempted
+    InvalidMove { from: Position, to: Position },
+
+    /// Specific error: Game not found
+    GameNotFound { game_id: String },
+
+    /// Specific error: Not the player's turn
+    NotYourTurn,
+
+    /// Specific error: Player not in the specified game
+    NotYourGame { game_id: String },
+
+    /// Specific error: Must join matchmaking before performing actions
+    MustJoinMatchmaking,
+
+    /// Specific error: Invalid message format
+    InvalidMessageFormat { details: String },
 }
 
 /// Actions that can be performed during a game
@@ -137,6 +155,36 @@ impl ServerMessage {
     /// Create a matchmaking joined acknowledgment
     pub fn matchmaking_joined() -> Self {
         ServerMessage::MatchmakingJoined
+    }
+
+    /// Create an invalid move error message
+    pub fn invalid_move(from: Position, to: Position) -> Self {
+        ServerMessage::InvalidMove { from, to }
+    }
+
+    /// Create a game not found error message
+    pub fn game_not_found(game_id: String) -> Self {
+        ServerMessage::GameNotFound { game_id }
+    }
+
+    /// Create a not your turn error message
+    pub fn not_your_turn() -> Self {
+        ServerMessage::NotYourTurn
+    }
+
+    /// Create a not your game error message
+    pub fn not_your_game(game_id: String) -> Self {
+        ServerMessage::NotYourGame { game_id }
+    }
+
+    /// Create a must join matchmaking error message
+    pub fn must_join_matchmaking() -> Self {
+        ServerMessage::MustJoinMatchmaking
+    }
+
+    /// Create an invalid message format error message
+    pub fn invalid_message_format(details: String) -> Self {
+        ServerMessage::InvalidMessageFormat { details }
     }
 }
 

@@ -208,6 +208,27 @@ impl SimpleGameClient {
                 ServerMessage::Error { message } => {
                     events.push(format!("Error: {}", message));
                 }
+                ServerMessage::InvalidMove { from, to } => {
+                    events.push(format!(
+                        "Invalid move: cannot move from {:?} to {:?}",
+                        from, to
+                    ));
+                }
+                ServerMessage::GameNotFound { game_id } => {
+                    events.push(format!("Game not found: {}", game_id));
+                }
+                ServerMessage::NotYourTurn => {
+                    events.push("Not your turn".to_string());
+                }
+                ServerMessage::NotYourGame { game_id } => {
+                    events.push(format!("Not your game: {}", game_id));
+                }
+                ServerMessage::MustJoinMatchmaking => {
+                    events.push("Must join matchmaking first".to_string());
+                }
+                ServerMessage::InvalidMessageFormat { details } => {
+                    events.push(format!("Invalid message format: {}", details));
+                }
             }
         }
 
