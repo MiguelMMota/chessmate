@@ -140,6 +140,10 @@ impl Board {
         self.en_passant_target
     }
 
+    pub fn clear_en_passant_target(&mut self) {
+        self.en_passant_target = None;
+    }
+
     pub fn find_king(&self, color: Color) -> Option<Position> {
         for row in 0..8 {
             for col in 0..8 {
