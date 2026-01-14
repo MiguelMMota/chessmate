@@ -250,4 +250,10 @@ impl ChessGame {
         }
         squares
     }
+
+    /// Clear the en passant target
+    /// Used when syncing board state from server
+    pub fn clear_en_passant_target(&mut self) {
+        self.board.clear_en_passant_target();
+    }
 }

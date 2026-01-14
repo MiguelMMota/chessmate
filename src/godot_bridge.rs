@@ -188,4 +188,10 @@ impl ChessGame {
     pub fn make_ai_move(&mut self) -> bool {
         self.game.make_ai_move()
     }
+
+    /// Clear the en passant target
+    #[func]
+    pub fn clear_en_passant_target(&mut self) {
+        self.game.clear_en_passant_target();
+    }
 }
