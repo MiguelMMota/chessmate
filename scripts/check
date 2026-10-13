@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Build and test. In CI (or with COVERAGE=1) also write coverage/lcov.info,
+# which the check workflow uses to enforce coverage of changed lines.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+cargo build --quiet
+if [ "${CI:-}" = "true" ] || [ "${COVERAGE:-}" = "1" ]; then
+  mkdir -p coverage
+  cargo llvm-cov --quiet --lcov --output-path coverage/lcov.info
+else
+  cargo test --quiet
+fi

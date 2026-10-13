@@ -1,11 +1,12 @@
 # Claude Code configuration and local task management
-.claude/
+.claude
 CLAUDE.md
 TODO
 DEVELOPMENT.md
 
 # Auxiliary scripts, useful for Claude Code workflow
-scripts/
+scripts/*
+!scripts/check
 
 # Rust build artifacts
 /target
