@@ -159,6 +159,10 @@ impl Board {
         self.en_passant_target = None;
     }
 
+    pub fn set_en_passant_target(&mut self, target: Option<Position>) {
+        self.en_passant_target = target;
+    }
+
     pub fn find_king(&self, color: Color) -> Option<Position> {
         for row in 0..8 {
             for col in 0..8 {

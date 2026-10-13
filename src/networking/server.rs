@@ -63,18 +63,13 @@ impl ServerGame {
     /// Convert internal game state to serializable format
     pub fn to_serializable_state(&self) -> SerializableGameState {
         let board = self.game.board();
-        let status = rules::get_game_status(board);
 
         SerializableGameState::new(
             self.game_id.clone(),
             self.white_player_id.clone(),
             self.black_player_id.clone(),
-            board.current_turn(),
-            status,
-            board.get_remaining_time(Color::White),
-            board.get_remaining_time(Color::Black),
+            board,
             &self.game.board_squares(),
-            board.last_action(),
         )
     }
 

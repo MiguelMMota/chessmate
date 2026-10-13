@@ -212,6 +212,12 @@ impl ChessGame {
         self.game.clear_en_passant_target();
     }
 
+    /// Set the en passant target
+    #[func]
+    pub fn set_en_passant_target(&mut self, row: i32, col: i32) {
+        self.game.set_en_passant_target(row as i8, col as i8);
+    }
+
     /// Place a piece on the board at the given position
     #[func]
     pub fn place_piece(

@@ -124,7 +124,7 @@ func submit_move(from_row: int, from_col: int, to_row: int, to_col: int, promoti
 	}
 
 	if promotion != "":
-		action["promotion"] = _piece_type_to_protocol(promotion)
+		action["promotion"] = _get_promotion_piece_type(promotion)
 
 	var message = {
 		"type": "SubmitAction",
@@ -233,7 +233,7 @@ func _handle_server_message(json_string: String) -> void:
 			DebugUtils.debug_var("Error from server", err_message)
 			error_received.emit(err_message)
 
-func _piece_type_to_protocol(piece_type: String) -> String:
+func _get_promotion_piece_type(piece_type: String) -> String:
 	match piece_type.to_lower():
 		"queen":
 			return "Queen"

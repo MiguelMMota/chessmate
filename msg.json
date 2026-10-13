@@ -1,0 +1,179 @@
+{
+    "type": "GameStateUpdate",
+    "state": {
+        "board_state": [
+            {
+                "id": 8,
+                "position": "a1",
+                "piece_type": "rook"
+            },
+            {
+                "id": 9,
+                "position": "b1",
+                "piece_type": "knight"
+            },
+            {
+                "id": 10,
+                "position": "c1",
+                "piece_type": "bishop"
+            },
+            {
+                "id": 11,
+                "position": "d1",
+                "piece_type": "queen"
+            },
+            {
+                "id": 12,
+                "position": "e1",
+                "piece_type": "king"
+            },
+            {
+                "id": 13,
+                "position": "f1",
+                "piece_type": "bishop"
+            },
+            {
+                "id": 14,
+                "position": "g1",
+                "piece_type": "knight"
+            },
+            {
+                "id": 15,
+                "position": "h1",
+                "piece_type": "rook"
+            },
+            {
+                "id": 0,
+                "position": "a2",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 1,
+                "position": "b2",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 2,
+                "position": "c2",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 4,
+                "position": "e2",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 6,
+                "position": "g2",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 7,
+                "position": "h2",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 5,
+                "position": "f4",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 19,
+                "position": "d5",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 20,
+                "position": "e5",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 21,
+                "position": "f5",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 3,
+                "position": "c6",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 16,
+                "position": "a7",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 17,
+                "position": "b7",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 18,
+                "position": "c7",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 22,
+                "position": "g7",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 23,
+                "position": "h7",
+                "piece_type": "pawn"
+            },
+            {
+                "id": 24,
+                "position": "a8",
+                "piece_type": "rook"
+            },
+            {
+                "id": 26,
+                "position": "c8",
+                "piece_type": "bishop"
+            },
+            {
+                "id": 27,
+                "position": "d8",
+                "piece_type": "queen"
+            },
+            {
+                "id": 28,
+                "position": "e8",
+                "piece_type": "king"
+            },
+            {
+                "id": 29,
+                "position": "f8",
+                "piece_type": "bishop"
+            },
+            {
+                "id": 30,
+                "position": "g8",
+                "piece_type": "knight"
+            },
+            {
+                "id": 31,
+                "position": "h8",
+                "piece_type": "rook"
+            }
+        ],
+        "next_player_id": "player_6819",
+        "time": {},
+        "status": "Ongoing",
+        "game_id": "98e8cdae-8cb4-41ca-aedb-4f4c5d03233f",
+        "last_action": {
+            "Move": {
+                "piece_id": 19,
+                "from": {
+                    "row": 6,
+                    "col": 3
+                },
+                "to": {
+                    "row": 4,
+                    "col": 3
+                }
+            }
+        }
+    }
+}
