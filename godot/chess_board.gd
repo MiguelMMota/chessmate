@@ -408,31 +408,33 @@ func update_board_local():
 func update_board_from_tracked_pieces():
 	"""Update board display from tracked pieces (online mode)"""
 	# Clear all piece labels first
-	for row in range(8):
-		for col in range(8):
-			piece_labels[row][col].text = ""
-
-	# Place pieces based on pieces_by_id
+	var square_info: Dictionary = {}
 	for piece_id in pieces_by_id.keys():
-		var piece_info = pieces_by_id[piece_id]
-		var pos = piece_info["position"]
+		var piece = pieces_by_id[piece_id];
+		var pos = piece["position"]
 		var piece_type = piece_info["piece_type"]
-		var color = piece_info["color"]
 
 		if pos.x >= 0 and pos.x < 8 and pos.y >= 0 and pos.y < 8:
 			# Get the symbol for this piece type
 			var symbol = _get_piece_symbol(piece_type)
 
 			# Hide piece if it's being dragged
-			if is_dragging and drag_start_square.x == pos.x and drag_start_square.y == pos.y:
-				piece_labels[pos.x][pos.y].text = ""
-			else:
-				piece_labels[pos.x][pos.y].text = symbol
+			if !is_dragging or drag_start_square.x != pos.x or drag_start_square.y != pos.y:
+				square_info[pos] = {"symbol": symbol, "color": piece_info["color"]}
 
-			# Apply color
+		square_info[pos] = symbol
+
+	for row in range(8):
+		for col in range(8):
+			var pos = Vector2i(row, col);
+			var square = square_info.get(pos, {})
+			piece_labels[row][col].text = square.get("symbol", "")
+			
+			var color = square.get("color", null)
 			if color == "white":
 				piece_labels[pos.x][pos.y].add_theme_color_override("font_color", PEARL_WHITE_COLOR)
-			else:
+
+			if color == "black":
 				piece_labels[pos.x][pos.y].add_theme_color_override("font_color", BLACK_COLOR)
 
 	queue_redraw()
@@ -834,24 +836,18 @@ func _on_match_found(game_id: String, opponent_id: String, your_color: String):
 func _on_game_state_updated(state: Dictionary):
 	DebugUtils.debug("Game state updated from server")
 
-	# Check if there's an action to animate
 	var last_action = state.get("last_action", null)
-
 	if last_action != null:
-		# Animate the action first, then reconcile
 		_animate_action_and_reconcile(state, last_action)
 	else:
-		# No action to animate, just apply the state directly
-		_apply_game_state_immediately(state)
+		_apply_game_state(state)
 
-func _apply_game_state_immediately(state: Dictionary):
+func _apply_game_state(state: Dictionary):
 	"""Apply game state without animation"""
-	# Update the board with the server's state
 	var board_state = state.get("board_state", [])
 	if board_state.size() > 0:
 		_apply_server_board_state(board_state)
 
-	# Update turn state from server
 	var next_player_id = state.get("next_player_id", "")
 	if next_player_id != "":
 		_apply_turn_state(next_player_id)
@@ -875,9 +871,9 @@ func _animate_action_and_reconcile(state: Dictionary, action: Dictionary):
 
 	# For now, implement a simple version that just applies the state
 	# TODO: Implement actual animations based on action type
-	_apply_game_state_immediately(state)
+	_apply_game_state(state)
 
-	# Future: Add animation logic here based on action type:
+	# TODO: UI - Future: Add animation logic here based on action type:
 	# - Move: Tween piece from 'from' to 'to'
 	# - Capture: Fade out victim, then tween attacker
 	# - Castle: Tween both king and rook simultaneously
@@ -925,7 +921,6 @@ func _apply_server_board_state(board_state: Array):
 	"""
 	Apply server's ID-based board state to local game with reconciliation.
 	Format: [{id: u8, position: "e4", piece_type: "pawn"}, ...]
-	IDs 0-15 are White, 16-31 are Black
 
 	Reconciliation automatically handles:
 	- Pieces that moved (update position)
@@ -1048,3 +1043,44 @@ func _algebraic_to_position(algebraic: String):
 		return null
 
 	return Vector2i(row, col)
+
+func _reconstruct_en_passant_from_action(action: Dictionary):
+	"""
+	Reconstruct the en passant target square from the last action.
+	If the last action was a pawn moving 2 squares forward, set the en passant target.
+	"""
+	var action_type = action.get("type", "")
+
+	# Only "Move" actions can create en passant opportunities
+	if action_type != "Move":
+		return
+
+	# Get the from and to positions
+	var from = action.get("from", null)
+	var to = action.get("to", null)
+
+	if from == null or to == null:
+		return
+
+	var from_row = from.get("row", -1)
+	var from_col = from.get("col", -1)
+	var to_row = to.get("row", -1)
+	var to_col = to.get("col", -1)
+
+	if from_row < 0 or to_row < 0:
+		return
+
+	# Check if this is a pawn double-move (moved 2 squares vertically)
+	var row_diff = abs(to_row - from_row)
+	if row_diff == 2 and from_col == to_col:
+		# This is a pawn double-move, set the en passant target to the square in between
+		var en_passant_row = (from_row + to_row) / 2
+		var en_passant_col = from_col
+
+		DebugUtils.debug_vars({
+			"Setting en passant target at": Vector2i(en_passant_row, en_passant_col),
+			"From pawn move": Vector2i(from_row, from_col),
+			"To": Vector2i(to_row, to_col)
+		})
+
+		chess_game.set_en_passant_target(en_passant_row, en_passant_col)

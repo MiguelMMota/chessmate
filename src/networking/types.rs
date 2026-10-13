@@ -1,6 +1,7 @@
 // Network-compatible types for serialization
-use crate::game::board::GameStatus;
+use crate::game::board::{Board, CastlingRights, GameStatus};
 use crate::game::piece::{Color, GameAction, Piece, PieceType, Position};
+use crate::game::rules;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -29,6 +30,8 @@ pub struct SerializableGameState {
     pub status: GameStatus,
     pub game_id: String,
     pub last_action: Option<GameAction>, // The action that led to this state (for animation)
+    pub en_passant_target: Option<Position>,
+    pub castling_rights: CastlingRights,
 }
 
 impl SerializableGameState {
@@ -37,14 +40,15 @@ impl SerializableGameState {
         game_id: String,
         white_player_id: String,
         black_player_id: String,
-        current_turn: Color,
-        status: GameStatus,
-        white_time: Option<i32>,
-        black_time: Option<i32>,
+        board: &Board,
         squares: &[[Option<Piece>; 8]; 8],
-        last_action: Option<GameAction>,
     ) -> Self {
         let board_state = Self::squares_to_id_based(squares);
+        let status = rules::get_game_status(board);
+        let white_time = board.get_remaining_time(Color::White);
+        let black_time = board.get_remaining_time(Color::Black);
+        let last_action = board.last_action();
+        let current_turn = board.current_turn();
 
         let next_player_id = match current_turn {
             Color::White => white_player_id.clone(),
@@ -59,6 +63,9 @@ impl SerializableGameState {
             time.insert(black_player_id, bt);
         }
 
+        let en_passant_target = board.en_passant_target();
+        let castling_rights = board.castling_rights().clone();
+
         Self {
             board_state,
             next_player_id,
@@ -66,6 +73,8 @@ impl SerializableGameState {
             status,
             game_id,
             last_action,
+            en_passant_target,
+            castling_rights,
         }
     }
 

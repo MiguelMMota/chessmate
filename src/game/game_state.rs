@@ -272,6 +272,15 @@ impl ChessGame {
         self.board.clear_en_passant_target();
     }
 
+    /// Set the en passant target
+    /// Used when syncing board state from server
+    pub fn set_en_passant_target(&mut self, row: i8, col: i8) {
+        let pos = Position::new(row, col);
+        if pos.is_valid() {
+            self.board.set_en_passant_target(Some(pos));
+        }
+    }
+
     /// Place a piece on the board at the given position
     /// Used when syncing board state from server
     pub fn place_piece(&mut self, row: i8, col: i8, piece_type: PieceType, color: Color, id: u8) {
