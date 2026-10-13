@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Build and test. In CI (or with COVERAGE=1) also write coverage/lcov.info,
+# which the check workflow uses to enforce coverage of changed lines.
+# Builds for the host so a target pinned in .cargo/config.toml can't break CI.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+HOST="$(rustc -vV | sed -n 's/^host: //p')"
+cargo build --quiet --target "$HOST"
+if [ "${CI:-}" = "true" ] || [ "${COVERAGE:-}" = "1" ]; then
+  mkdir -p coverage
+  cargo llvm-cov --quiet --target "$HOST" --lcov --output-path coverage/lcov.info
+else
+  cargo test --quiet --target "$HOST"
+fi

@@ -1,0 +1,29 @@
+name: check
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install cargo-llvm-cov
+        if: hashFiles('Cargo.toml') != ''
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Build, test, coverage
+        run: ./scripts/check
+        env:
+          CI: "true"
+
+      - name: Coverage of changed lines
+        if: github.event_name == 'pull_request' && hashFiles('coverage/lcov.info') != ''
+        run: |
+          MIN=$(grep -E '^COVERAGE_MIN=' .dev-workflow.conf 2>/dev/null | cut -d= -f2)
+          pipx install diff-cover >/dev/null
+          diff-cover coverage/lcov.info --compare-branch="origin/${{ github.base_ref }}" --fail-under="${MIN:-80}"
